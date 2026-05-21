@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edge Device Simulator (Qualcomm AI Box)</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #1e293b; color: white; text-align: center; padding: 2rem; }
+    video, canvas { border-radius: 12px; border: 4px solid #334155; margin-top: 1rem; max-width: 640px; width: 100%; }
+    .status { display: inline-block; padding: 8px 16px; border-radius: 99px; font-weight: bold; margin-bottom: 1rem; }
+    .connected { background: #10b981; color: #064e3b; }
+    .disconnected { background: #ef4444; color: #7f1d1d; }
+    .stats { font-family: monospace; color: #94a3b8; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h2>📷 Edge Device Video Stream Simulator</h2>
+  <div id="connectionStatus" class="status disconnected">DISCONNECTED</div>
+  <p>This page uses your laptop webcam to simulate the Qualcomm AI Box.<br>It captures frames and sends them over WebSockets to <code>localhost:5000</code>.</p>
+  
+  <video id="videoElement" autoplay playsinline></video>
+  <canvas id="canvasElement" style="display: none;"></canvas>
+  
+  <div class="stats" id="statsDisplay">FPS: 0 | Bytes Sent: 0</div>
+
+  <script>
+    const socket = io('http://localhost:5000');
+    const statusDiv = document.getElementById('connectionStatus');
+    const video = document.getElementById('videoElement');
+    const canvas = document.getElementById('canvasElement');
+    const statsDisplay = document.getElementById('statsDisplay');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    let isConnected = false;
+    let framesSent = 0;
+    let lastTime = Date.now();
+
+    socket.on('connect', () => {
+      statusDiv.textContent = 'CONNECTED TO BACKEND';
+      statusDiv.className = 'status connected';
+      isConnected = true;
+    });
+
+    socket.on('disconnect', () => {
+      statusDiv.textContent = 'DISCONNECTED';
+      statusDiv.className = 'status disconnected';
+      isConnected = false;
+    });
+
+    // Request Webcam
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+      .then(stream => {
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          startStreaming();
+        };
+      })
+      .catch(err => {
+        console.error("Camera error:", err);
+        alert("Cannot access webcam. Please grant permission.");
+      });
+
+    function startStreaming() {
+      // 15 FPS = ~66ms interval
+      setInterval(() => {
+        if (!isConnected || video.paused || video.ended) return;
+
+        // Draw current video frame to hidden canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to Base64 JPEG (Quality 0.6 to save bandwidth)
+        const base64Frame = canvas.toDataURL('image/jpeg', 0.6);
+        
+        // Emit to Backend
+        socket.emit('video_frame_upstream', base64Frame);
+        
+        // Calculate FPS
+        framesSent++;
+        const now = Date.now();
+        if (now - lastTime >= 1000) {
+          statsDisplay.textContent = `Streaming... | FPS: ${framesSent} | Frame size: ${Math.round(base64Frame.length/1024)} KB`;
+          framesSent = 0;
+          lastTime = now;
+        }
+      }, 66); 
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "fruit-quality-detection-web-app",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend -- --port=3000 --host=0.0.0.0",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend",
+    "start": "concurrently \"npm run start --workspace=frontend\" \"npm run start --workspace=backend\"",
+    "postinstall": "npm update"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

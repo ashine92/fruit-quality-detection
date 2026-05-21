@@ -1,0 +1,8 @@
+{
+  "name": "Banana AI-Scan v2.0",
+  "description": "Industrial monitoring dashboard for automated banana quality inspection and sorting using computer vision.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
