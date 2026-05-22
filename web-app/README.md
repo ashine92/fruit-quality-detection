@@ -2,7 +2,7 @@
 
 Dự án này là Web Dashboard cho hệ thống phân loại chất lượng trái cây, bao gồm Frontend (React) và Backend (Node.js) chạy đồng thời. Hệ thống hiện sử dụng **SQLite** và **WebSockets** để truyền hình ảnh thời gian thực.
 
-## 🚀 Hướng Dẫn Chạy Demo Toàn Bộ Hệ Thống
+## 🚀 Hướng Dẫn Chạy Demo Toàn Bộ Hệ Thống Khi Chưa Có Phần Cứng Thực Tế
 
 Để demo hệ thống cho giáo viên hoặc team, hãy làm theo đúng thứ tự 4 bước sau:
 

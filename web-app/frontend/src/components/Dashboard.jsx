@@ -1,7 +1,40 @@
 import { Activity, Camera, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useState, useEffect } from 'react'; // [SỬA]: Thêm Hook React
+import { io } from 'socket.io-client'; // [SỬA]: Import thư viện Socket
 
 export default function Dashboard() {
+  // [SỬA]: Khởi tạo State lưu ảnh frame từ socket và trạng thái kết nối
+  const [videoFrame, setVideoFrame] = useState(null);
+  const [isLive, setIsLive] = useState(false);
+
+  // [SỬA]: Dùng useEffect lắng nghe WebSocket khi Dashboard load
+  useEffect(() => {
+    // Kết nối tới Backend Socket ở port 5000 (Dùng window.location.hostname để hỗ trợ mạng LAN)
+    const socketUrl = `http://${window.location.hostname}:5000`;
+    const socket = io(socketUrl);
+
+    socket.on('connect', () => {
+      console.log('UI đã kết nối Socket Server');
+      setIsLive(true);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('UI mất kết nối Socket');
+      setIsLive(false);
+    });
+
+    // Bắt sự kiện video từ backend gửi xuống và cập nhật state
+    socket.on('video_frame_downstream', (base64Frame) => {
+      setVideoFrame(base64Frame);
+    });
+
+    // Cleanup đóng socket khi người dùng rời khỏi trang
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const categories = [
     { label: 'Ripe', value: '11,702', color: '#22c55e' },
     { label: 'Unripe', value: '1,420', color: '#eab308' },
@@ -16,16 +49,26 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm flex flex-col">
           <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
             <h3 className="text-headline-sm text-on-surface">Live Vision Feed</h3>
-            <span className="flex items-center text-label-bold text-red-600">
-              <span className="h-2 w-2 rounded-full bg-red-600 mr-2 animate-pulse"></span> REC
+            {/* [SỬA]: Đổi trạng thái hiển thị REC đỏ nhấp nháy khi có mạng, chữ mờ khi rớt mạng */}
+            <span className={`flex items-center text-label-bold ${isLive ? 'text-red-600' : 'text-outline-variant'}`}>
+              <span className={`h-2 w-2 rounded-full mr-2 ${isLive ? 'bg-red-600 animate-pulse' : 'bg-outline-variant'}`}></span> 
+              {isLive ? 'REC' : 'NO STREAM'}
             </span>
           </div>
           <div className="relative flex-1 bg-black aspect-video flex items-center justify-center overflow-hidden">
-            <img 
-              alt="Camera feed" 
-              className="w-full h-full object-cover opacity-90" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCApIlBt7WaYKVZ-XDEP-YFuFY3K-yeedOb5dt_zOkoQES_pfWOXdv_mbkL3C5BiAeltdwvWma9UhgOdQ9plu3opvOBsOjBqvndVlqdOJnFnZ5sKczfHqWQfS5fjAd8RoZl6bVuJGaiBxCM-lBQdGR5cVh9IcxPyuhMpTT9HnzXQn6oeXBu8iLMkJAxb4NLT7uvB5WmCGUFR7GD7XjGJkW72G28ESyg9SaB-f1b08EawKm6wRAsiUqkGbOolGfkj6_KC2iuq5PtX2rG" 
-            />
+            {/* [SỬA]: Hiển thị videoFrame nếu có, nếu không có hiện icon Camera chờ đợi */}
+            {videoFrame ? (
+              <img 
+                alt="Camera feed" 
+                className="w-full h-full object-cover opacity-90" 
+                src={videoFrame} 
+              />
+            ) : (
+              <div className="text-outline-variant flex flex-col items-center">
+                <Camera className="w-12 h-12 mb-2 opacity-50 animate-pulse" />
+                <p className="text-sm font-medium">Waiting for video stream...</p>
+              </div>
+            )}
             {/* Bounding Box Overlay */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
