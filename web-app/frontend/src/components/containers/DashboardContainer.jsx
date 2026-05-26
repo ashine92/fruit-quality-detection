@@ -9,7 +9,7 @@ export default function DashboardContainer() {
 
   // Connect to WebSocket Server
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(`http://${window.location.hostname}:5000`);
     
     socket.on('video_frame_downstream', (base64Frame) => {
       setVideoFrame(base64Frame);
