@@ -9,8 +9,8 @@ import socketio
 MODEL_URL = "http://localhost/image"
 
 # Địa chỉ trỏ tới Backend Node.js
-BACKEND_API_URL = "http://192.168.0.109:5000/api/v1/inferences"
-BACKEND_SOCKET_URL = "http://192.168.0.109:5000"
+BACKEND_API_URL = "http://192.168.0.106:5000/api/v1/inferences"
+BACKEND_SOCKET_URL = "http://192.168.0.106:5000"
 
 # 2. KHỞI TẠO SOCKET.IO CLIENT
 sio = socketio.Client()
@@ -22,27 +22,52 @@ except Exception as e:
     print("Không thể kết nối tới Socket Backend:", e)
 
 
-# 3. KHỞI TẠO CAMERA
-cap = cv2.VideoCapture(2, cv2.CAP_V4L2)
-cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-time.sleep(2)
+# 3. KHỞI TẠO CAMERA VÀ TỰ ĐỘNG KẾT NỐI LẠI
+def init_camera():
+    # Quét qua các index từ 0 đến 10 để tìm camera đang sống
+    for i in range(10):
+        cap_temp = cv2.VideoCapture(i, cv2.CAP_V4L2)
+        if cap_temp.isOpened():
+            cap_temp.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+            cap_temp.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap_temp.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            ret_temp, _ = cap_temp.read()
+            if ret_temp:
+                print(f"Đã tìm thấy và kết nối Camera tại: /dev/video{i}")
+                return cap_temp
+            cap_temp.release()
+    return None
 
-if not cap.isOpened():
-    print("Lỗi: Không thể mở camera")
+cap = init_camera()
+if cap is None:
+    print("Lỗi: Không thể mở camera ở bất kỳ index nào")
+    # Tạm thời exit, hoặc có thể sleep rồi quét lại
     exit()
 
 print("Camera OK")
 
 last_inference_time = 0
 inference_interval = 0.3
+fail_count = 0
 
 while True:
+    if cap is None:
+        time.sleep(2)
+        cap = init_camera()
+        continue
+
     ret, frame = cap.read()
     if not ret:
-        print("lỗi đọc khung hinh từ camera")
+        fail_count += 1
+        print(f"Lỗi đọc khung hình từ camera (lần {fail_count})...")
+        if fail_count > 10:
+            print("⚠️ Cảnh báo: Camera có thể đã bị rớt phần cứng. Đang thử kết nối lại...")
+            cap.release()
+            cap = None
+            fail_count = 0
         continue
+
+    fail_count = 0
 
     # --- A. Luồng gửi Video qua WebSocket ---
     _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
