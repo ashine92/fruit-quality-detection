@@ -67,7 +67,7 @@ export default function AnalyticsUI({ trendData, logs, onRefresh }) {
 
       <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
-          <h3 className="text-headline-sm text-on-surface">Nhật ký Inference</h3>
+          <h3 className="text-headline-sm text-on-surface">Nhật ký</h3>
           <button onClick={onRefresh} className="p-2 hover:bg-surface-variant rounded-lg transition-colors">
             <RefreshCw className="w-4 h-4 text-outline" />
           </button>
@@ -76,6 +76,7 @@ export default function AnalyticsUI({ trendData, logs, onRefresh }) {
           <thead>
             <tr className="bg-surface-container-low text-[10px] font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant">
               <th className="px-6 py-4">Serial ID</th>
+              <th className="px-6 py-4">Thời gian</th>
               <th className="px-6 py-4">Loại (AI)</th>
               <th className="px-6 py-4">Độ Tin Cậy</th>
               <th className="px-6 py-4 text-right">Lệnh</th>
@@ -85,6 +86,7 @@ export default function AnalyticsUI({ trendData, logs, onRefresh }) {
             {logs?.map((log) => (
               <tr key={log.id} className="hover:bg-surface-container/50 transition-colors">
                 <td className="px-6 py-4 text-xs font-bold text-on-surface">{log.id}</td>
+                <td className="px-6 py-4 text-xs font-medium text-on-surface-variant">{log.timestamp}</td>
                 <td className="px-6 py-4">
                   <span className="px-2 py-0.5 bg-surface-container text-[10px] font-bold rounded-full uppercase">
                     {log.className}
