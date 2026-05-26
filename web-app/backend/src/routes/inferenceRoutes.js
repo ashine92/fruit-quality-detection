@@ -10,7 +10,13 @@
  */
 
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
@@ -166,12 +172,29 @@ router.post('/inferences', (req, res) => {
       });
     }
 
+    let final_snapshot_url = snapshot_url;
+    if (snapshot_url && snapshot_url.startsWith('data:image')) {
+      const matches = snapshot_url.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const ext = matches[1];
+        const data = matches[2];
+        const buffer = Buffer.from(data, 'base64');
+        const filename = `snapshot_${Date.now()}.${ext}`;
+        const filepath = path.join(__dirname, '../../public/snapshots', filename);
+        
+        fs.mkdirSync(path.dirname(filepath), { recursive: true });
+        fs.writeFileSync(filepath, buffer);
+        
+        final_snapshot_url = `/public/snapshots/${filename}`;
+      }
+    }
+
     const stmt = db.prepare(`
       INSERT INTO inferences (fruit_type, status, quality_score, confidence, inference_ms, snapshot_url)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
-    const info = stmt.run(fruit_type, status, quality_score, confidence, inference_ms, snapshot_url);
+    const info = stmt.run(fruit_type, status, quality_score, confidence, inference_ms, final_snapshot_url);
 
     res.status(201).json({
       success: true,

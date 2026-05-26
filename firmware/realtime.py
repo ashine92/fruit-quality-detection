@@ -23,7 +23,7 @@ CAMERA_HEIGHT      = 480
 STREAM_FPS         = 20       # FPS gửi lên WebSocket (20fps mượt hơn)
 STREAM_QUALITY     = 70       # JPEG quality cho stream (cao hơn = sắc nét hơn)
 STREAM_SCALE       = 0.75     # Scale xuống 75% trước khi encode (480x360)
-INFERENCE_INTERVAL = 2.0      # Chạy AI mỗi 2 giây
+INFERENCE_INTERVAL = 5.0      # Chạy AI mỗi 5 giây và chụp ảnh lưu DB
 
 # ─────────────────────────────────────────────
 # 2. SOCKET.IO CLIENT
@@ -230,13 +230,17 @@ class InferenceWorker(threading.Thread):
                     ms   = int((time.time() - start_ms) * 1000)
                     print(f"🍎 {best['tagName']} | {best['probability']:.0%} | {ms}ms")
 
+                    # Chụp ảnh base64 gửi lên DB backend
+                    _, snap_buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    snap_b64 = base64.b64encode(snap_buf).decode('utf-8')
+
                     payload = {
                         "fruit_type"    : "APPLE",
                         "status"        : str(best["tagName"]).capitalize(),
                         "quality_score" : round(best["probability"] * 10, 1),
                         "confidence"    : round(best["probability"] * 100, 2),
                         "inference_ms"  : ms,
-                        "snapshot_url"  : ""
+                        "snapshot_url"  : f"data:image/jpeg;base64,{snap_b64}"
                     }
                     try:
                         requests.post(BACKEND_API_URL, json=payload, timeout=2)

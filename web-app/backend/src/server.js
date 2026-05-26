@@ -3,7 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import inferenceRoutes from './routes/inferenceRoutes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: '.env.development' });
 
@@ -18,7 +23,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // API Routes
 app.use('/api/v1', inferenceRoutes);
