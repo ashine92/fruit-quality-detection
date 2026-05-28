@@ -13,8 +13,8 @@ import glob
 # 1. CẤU HÌNH
 # ─────────────────────────────────────────────
 MODEL_URL          = "http://localhost/image"
-BACKEND_API_URL    = "http://192.168.0.114:5000/api/v1/inferences"
-BACKEND_SOCKET_URL = "http://192.168.0.114:5000"
+BACKEND_API_URL    = "http://192.168.0.104:5000/api/v1/inferences"
+BACKEND_SOCKET_URL = "http://192.168.0.104:5000"
 
 # Bỏ hardcode device path — tự động quét khi khởi động và khi reconnect
 CAMERA_WIDTH       = 640

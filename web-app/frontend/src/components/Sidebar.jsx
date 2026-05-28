@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Settings } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 
 export default function Sidebar() {
@@ -13,8 +13,8 @@ export default function Sidebar() {
   return (
     <nav className="hidden md:flex flex-col h-screen w-64 bg-surface-container border-r border-outline-variant py-8 shrink-0 z-10 sticky top-0">
       <div className="px-6 mb-8">
-        <h2 className="text-headline-sm font-bold text-on-surface tracking-tighter">Node_Alpha_72</h2>
-        <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">Edge Session 2.0</p>
+        <h2 className="text-headline-sm font-bold text-on-surface tracking-tighter">AgriVision Edge</h2>
+        <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">AI QUALITY CONTROL</p>
       </div>
 
       <div className="flex-1 space-y-1">
@@ -38,12 +38,7 @@ export default function Sidebar() {
         })}
       </div>
 
-      <div className="px-3 mt-auto">
-        <button className="w-full flex items-center px-4 h-11 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all text-xs font-bold uppercase tracking-wider">
-          <LogOut className="mr-3 w-4 h-4" />
-          Disconnect
-        </button>
-      </div>
+
     </nav>
   );
 }
