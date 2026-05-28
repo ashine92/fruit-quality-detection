@@ -2,10 +2,10 @@
  * DashboardUI - Presentational Component (JavaScript Version)
  */
 import { useState, useEffect } from 'react';
-import { Activity, Camera } from 'lucide-react';
+import { Activity, Camera, Play, Square } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function DashboardUI({ stats, telemetry, latestLog, videoFrame }) {
+export default function DashboardUI({ stats, telemetry, latestLog, videoFrame, isClassifying, onToggleClassification }) {
   if (!stats || !telemetry) return null;
 
   const categories = [
@@ -41,7 +41,29 @@ export default function DashboardUI({ stats, telemetry, latestLog, videoFrame })
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm flex flex-col">
           <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
-            <h3 className="text-headline-sm text-on-surface">Live Vision Feed</h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-headline-sm text-on-surface">Live Vision Feed</h3>
+              <button 
+                onClick={onToggleClassification}
+                className={`flex items-center px-4 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all ${
+                  isClassifying 
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200' 
+                    : 'bg-primary text-on-primary hover:bg-primary-hover shadow-sm'
+                }`}
+              >
+                {isClassifying ? (
+                  <>
+                    <Square className="w-4 h-4 mr-2 fill-current" />
+                    Stop Classification
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2 fill-current" />
+                    Start Classification
+                  </>
+                )}
+              </button>
+            </div>
             <span className="flex items-center text-label-bold text-red-600 uppercase text-[10px] tracking-widest">
               <span className={`h-2 w-2 rounded-full mr-2 ${videoFrame ? 'bg-red-600 animate-pulse' : 'bg-gray-400'}`}></span>
               {videoFrame ? 'LIVE' : 'NO STREAM'}

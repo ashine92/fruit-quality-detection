@@ -33,13 +33,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
 });
 
+// Global state to store whether classification is active
+let globalClassificationState = false;
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
   console.log(`[Socket] Device connected: ${socket.id}`);
 
+  // Send the current state to the newly connected client immediately
+  socket.emit('classification_state', { active: globalClassificationState });
+
   socket.on('video_frame_upstream', (base64Frame) => {
     // Broadcast the frame to all connected UI clients
     socket.broadcast.emit('video_frame_downstream', base64Frame);
+  });
+
+  socket.on('set_classification_state', (data) => {
+    if (typeof data.active === 'boolean') {
+      globalClassificationState = data.active;
+      // Broadcast the new state to ALL clients (UI and Firmware)
+      io.emit('classification_state', { active: globalClassificationState });
+      console.log(`[Socket] Classification state changed to: ${globalClassificationState}`);
+    }
   });
 
   socket.on('disconnect', () => {

@@ -6,17 +6,30 @@ import DashboardUI from '../presentational/DashboardUI';
 
 export default function DashboardContainer() {
   const [videoFrame, setVideoFrame] = useState(null);
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [socketRef, setSocketRef] = useState(null);
 
   // Connect to WebSocket Server
   useEffect(() => {
     const socket = io(`http://${window.location.hostname}:5000`);
+    setSocketRef(socket);
     
     socket.on('video_frame_downstream', (base64Frame) => {
       setVideoFrame(base64Frame);
     });
 
+    socket.on('classification_state', (data) => {
+      setIsClassifying(data.active);
+    });
+
     return () => socket.disconnect();
   }, []);
+
+  const toggleClassification = () => {
+    if (socketRef) {
+      socketRef.emit('set_classification_state', { active: !isClassifying });
+    }
+  };
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['production-stats'],
@@ -47,5 +60,14 @@ export default function DashboardContainer() {
 
   const latestLog = logs && logs.length > 0 ? logs[0] : null;
 
-  return <DashboardUI stats={stats} telemetry={telemetry} latestLog={latestLog} videoFrame={videoFrame} />;
+  return (
+    <DashboardUI 
+      stats={stats} 
+      telemetry={telemetry} 
+      latestLog={latestLog} 
+      videoFrame={videoFrame} 
+      isClassifying={isClassifying}
+      onToggleClassification={toggleClassification}
+    />
+  );
 }
