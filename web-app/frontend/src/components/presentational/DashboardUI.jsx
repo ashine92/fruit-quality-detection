@@ -95,7 +95,7 @@ export default function DashboardUI({ stats, telemetry, latestLog, videoFrame, i
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm flex flex-col">
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm flex flex-col">
           <div className="px-6 py-4 border-b border-outline-variant bg-[#fff7ed]">
             <h3 className="text-headline-sm text-[#c2410c]">Current Detection</h3>
           </div>

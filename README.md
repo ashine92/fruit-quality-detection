@@ -70,7 +70,7 @@ This project aims to develop a **real-time fruit quality classification system**
 - **AI Model Training:** Data collection & labeling, augmentation, model selection (e.g., Azure Custom Vision), model export for edge deployment, metrics: accuracy, recall, F1 score, confusion matrix.
 - **System Performance:** Real-time inference speed, resource usage (CPU/RAM/GPU), actuation timing and precision, stability across lighting conditions, dashboard latency.
 
-## How to Run the Web Demo (No Hardware Required)
+## How to Start the Application
 
 1. **Start the Web App**
    ```bash
@@ -80,28 +80,21 @@ This project aims to develop a **real-time fruit quality classification system**
    ```
 2. **Open the Dashboard UI**
    - Go to: [http://localhost:3000](http://localhost:3000)  
-     This shows dashboards and live feed frame (`NO STREAM` appears if camera is not connected).
+   - This shows the live dashboard and camera stream.
 
-3. **Simulate Edge Camera**
-   - Open [http://localhost:3000/mock-edge.html](http://localhost:3000/mock-edge.html) in another browser tab.
-   - Allow camera access when prompted.
-   - Green "CONNECTED TO BACKEND" means streaming is live from your laptop webcam.
-
-4. **Send Test Classification Data**
-   - Open a new PowerShell window and run:
-     ```powershell
-     $body = @{ fruit_type="Banana"; status="Rotten"; quality_score=0.10; confidence=97.5; inference_ms=11 } | ConvertTo-Json; Invoke-RestMethod -Method POST -Uri http://localhost:5000/api/v1/inference -Body $body -ContentType "application/json"
+3. **Start the Edge Device (Hardware)**
+   - Connect the camera to your edge device.
+   - Run the Python script:
+     ```bash
+     cd firmware
+     python realtime.py
      ```
-   - The dashboard will instantly update with the new detection.
+   - The device will begin capturing frames, processing AI inferences, and streaming data to the backend.
 
 ## Database Management
 
 - Uses SQLite database under `database/fruit_quality.db`.
-- To reset and generate 100 sample records:
-  ```bash
-  node database/seed.js
-  ```
-
+- Data is updated automatically in real-time as the edge device runs.
 ## Advantages Over Manual Inspection
 
 - Reduces labor and increases throughput.

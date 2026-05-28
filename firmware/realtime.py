@@ -16,8 +16,9 @@ from collections import deque
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-
-BACKEND_SOCKET_URL = "http://192.168.0.110:5000"
+MODEL_URL          = "http://localhost/image"
+BACKEND_API_URL    = "http://192.168.0.104:5000/api/v1/inferences"
+BACKEND_SOCKET_URL = "http://192.168.0.104:5000"
 
 CAMERA_WIDTH  = 640
 CAMERA_HEIGHT = 480

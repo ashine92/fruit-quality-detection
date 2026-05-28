@@ -28,7 +28,9 @@ db.exec(`
     status        TEXT    NOT NULL,
     confidence    REAL    NOT NULL DEFAULT 0,
     inference_ms  INTEGER DEFAULT 0,
-    snapshot_url  TEXT    DEFAULT ''
+    snapshot_url  TEXT    DEFAULT '',
+    human_label   TEXT    DEFAULT NULL,
+    is_corrected  INTEGER DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS telemetry (

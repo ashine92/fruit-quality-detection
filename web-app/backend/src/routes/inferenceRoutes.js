@@ -93,14 +93,16 @@ router.get('/inferences', (req, res) => {
 
     const rows = db.prepare(`
       SELECT
-        id,
+        id as rawId,
         '#BN-' || printf('%04d', id) as id,
         timestamp,
         fruit_type  as fruitType,
         status      as className,
         confidence,
         quality_score as qualityScore,
-        snapshot_url  as snapshotUrl
+        snapshot_url  as snapshotUrl,
+        human_label   as humanLabel,
+        is_corrected  as isCorrected
       FROM inferences
       WHERE confidence >= ?
       ORDER BY rowid DESC
@@ -204,6 +206,43 @@ router.post('/inferences', (req, res) => {
   } catch (err) {
     console.error('POST /inferences error:', err);
     res.status(500).json({ error: 'Failed to save inference' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/v1/inferences/:id/label
+// Called by UI to assign a human label
+// Body: { human_label }
+// ─────────────────────────────────────────────
+router.patch('/inferences/:id/label', (req, res) => {
+  try {
+    const rawId = req.params.id;
+    let numericId = rawId;
+    if (typeof rawId === 'string' && rawId.startsWith('#BN-')) {
+      numericId = parseInt(rawId.replace('#BN-', ''), 10);
+    }
+
+    const { human_label } = req.body;
+    if (!human_label) {
+      return res.status(400).json({ error: 'Missing human_label' });
+    }
+
+    const stmt = db.prepare(`
+      UPDATE inferences
+      SET human_label = ?, is_corrected = 1
+      WHERE id = ?
+    `);
+
+    const info = stmt.run(human_label, numericId);
+
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Inference record not found' });
+    }
+
+    res.json({ success: true, message: 'Label updated' });
+  } catch (err) {
+    console.error('PATCH /inferences/:id/label error:', err);
+    res.status(500).json({ error: 'Failed to update label' });
   }
 });
 

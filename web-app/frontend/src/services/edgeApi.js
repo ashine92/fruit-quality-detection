@@ -59,5 +59,21 @@ export const edgeApi = {
     console.log('[edgeApi] Camera config update (not yet implemented):', config);
     return true;
   },
+
+  /**
+   * PATCH /api/v1/inferences/:id/label
+   * Assign a human label to an inference result
+   */
+  assignLabel: async (id, human_label) => {
+    const res = await fetch(`${BASE}/inferences/${id}/label`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ human_label }),
+    });
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}: /inferences/${id}/label`);
+    }
+    return res.json();
+  },
 };
 
