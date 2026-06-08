@@ -13,3 +13,6 @@ coverage/
 *.db-shm
 *.sqlite
 database/fruit_quality.db
+
+# Snapshots
+backend/public/snapshots/
