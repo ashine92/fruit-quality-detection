@@ -84,6 +84,25 @@ router.get('/telemetry', (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// POST /api/v1/telemetry
+// Insert telemetry data from Edge device
+// ─────────────────────────────────────────────
+router.post('/telemetry', (req, res) => {
+  try {
+    const { fps, inference_ms, status } = req.body;
+    db.prepare(`
+      INSERT INTO telemetry (fps, inference_ms, status)
+      VALUES (?, ?, ?)
+    `).run(fps || 0, inference_ms || 0, status || 'Online');
+    
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('POST /telemetry error:', err);
+    res.status(500).json({ error: 'Failed to insert telemetry' });
+  }
+});
+
+// ─────────────────────────────────────────────
 // GET /api/v1/inferences
 // Query params: ?confidence=80 (filter by min confidence)
 // ─────────────────────────────────────────────
@@ -183,10 +202,10 @@ router.post('/inferences', (req, res) => {
         const buffer = Buffer.from(data, 'base64');
         const filename = `snapshot_${Date.now()}.${ext}`;
         const filepath = path.join(__dirname, '../../public/snapshots', filename);
-        
+
         fs.mkdirSync(path.dirname(filepath), { recursive: true });
         fs.writeFileSync(filepath, buffer);
-        
+
         final_snapshot_url = `/public/snapshots/${filename}`;
       }
     }
@@ -243,6 +262,41 @@ router.patch('/inferences/:id/label', (req, res) => {
   } catch (err) {
     console.error('PATCH /inferences/:id/label error:', err);
     res.status(500).json({ error: 'Failed to update label' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/v1/snapshots
+// Called by UI to save a snapshot from video stream
+// Body: { imageBase64 }
+// ─────────────────────────────────────────────
+router.post('/snapshots', (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64 || !imageBase64.startsWith('data:image')) {
+      return res.status(400).json({ error: 'Invalid or missing imageBase64' });
+    }
+
+    const matches = imageBase64.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ error: 'Invalid base64 format' });
+    }
+
+    const ext = matches[1];
+    const data = matches[2];
+    const buffer = Buffer.from(data, 'base64');
+    const filename = `snapshot_${Date.now()}.${ext}`;
+    const filepath = path.join(__dirname, '../../public/snapshots', filename);
+    
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
+    fs.writeFileSync(filepath, buffer);
+    
+    const snapshot_url = `/public/snapshots/${filename}`;
+
+    res.json({ success: true, url: snapshot_url });
+  } catch (err) {
+    console.error('POST /snapshots error:', err);
+    res.status(500).json({ error: 'Failed to save snapshot' });
   }
 });
 

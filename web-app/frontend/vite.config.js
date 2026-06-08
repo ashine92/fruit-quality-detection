@@ -22,11 +22,11 @@ export default defineConfig(({ mode }) => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/api': {
-          target: 'http://localhost:5000',
+          target: 'http://127.0.0.1:5000',
           changeOrigin: true,
         },
         '/public': {
-          target: 'http://localhost:5000',
+          target: 'http://127.0.0.1:5000',
           changeOrigin: true,
         },
       },

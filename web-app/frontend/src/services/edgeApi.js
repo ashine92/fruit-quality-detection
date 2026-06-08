@@ -75,5 +75,20 @@ export const edgeApi = {
     }
     return res.json();
   },
+
+  /**
+   * POST /api/v1/snapshots
+   */
+  saveSnapshot: async (imageBase64) => {
+    const res = await fetch(`${BASE}/snapshots`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64 }),
+    });
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}: /snapshots`);
+    }
+    return res.json();
+  },
 };
 

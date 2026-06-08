@@ -10,28 +10,44 @@ import threading
 import numpy as np
 import requests
 import json
+import sys
 from io import BytesIO
 from collections import deque
 
+import sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-MODEL_URL          = "http://localhost/image"
-BACKEND_API_URL    = "http://192.168.0.104:5000/api/v1/inferences"
-BACKEND_SOCKET_URL = "http://192.168.0.104:5000"
+# BACKEND_API_URL    = "http://192.168.0.108:5000/api/v1/inferences"
+# BACKEND_SOCKET_URL = "http://192.168.0.108:5000"
+
+# Đổi thành Localhost nếu chạy trên laptop
+BACKEND_API_URL    = "http://localhost:5000/api/v1/inferences"
+BACKEND_SOCKET_URL = "http://localhost:5000"
 
 CAMERA_WIDTH  = 640
 CAMERA_HEIGHT = 480
 
-STREAM_FPS     = 20
-STREAM_QUALITY = 100
+STREAM_FPS     = 30
+STREAM_QUALITY = 60
 STREAM_SCALE   = 0.75
 # ───── AI INFERENCE CONFIG ─────
-MODEL_URL          = "http://127.0.0.1/image"  # Custom Vision Docker endpoint
+# --- MÔI TRƯỜNG TEST TRÊN LAPTOP ---
+MODEL_URL          = "http://127.0.0.1:5001/image"                              # Dùng với mock_ai.py
+SNAPSHOT_DIR       = r"d:\Study\DH\IoT in Factory\project\web-app\backend\public\snapshots"
+
+# --- MÔI TRƯỜNG CHẠY THẬT TRÊN THIẾT BỊ EDGE (QCS6490) ---
+# MODEL_URL          = "http://127.0.0.1/image"                                 # Custom Vision Docker endpoint
+# SNAPSHOT_DIR       = "/mnt/web_snapshots"                                     # SMB mount of Windows web-app path
+
 INFERENCE_INTERVAL = 2.0                        # Classify every 2 seconds
-CONFIDENCE_THRESHOLD = 0.5                      # Only report predictions > 50%
-SNAPSHOT_DIR       = "/mnt/web_snapshots"       # SMB mount of Windows web-app path
-BOARD_BASELINE_NODES = {0, 1}
+CONFIDENCE_THRESHOLD = 0.70                     # Under 70% is Unknown
+
+# Support laptop camera via command line arg or env var
+USE_LAPTOP_CAMERA = "--laptop" in sys.argv or os.environ.get("USE_LAPTOP", "0") == "1"
+BOARD_BASELINE_NODES = {1} if USE_LAPTOP_CAMERA else {0, 1}
 
 # ─────────────────────────────────────────────
 # SOCKET.IO
@@ -54,15 +70,16 @@ def disconnect():
     print("⚠️  WebSocket disconnected")
 
 # ─────────────────────────────────────────────
-# AI EVENT HANDLERS (DISABLED FOR NOW)
+# AI EVENT HANDLERS
 # ─────────────────────────────────────────────
-# Uncomment if backend needs to control inference state
-# is_classifying = False
-# @sio.event
-# def classification_state(data):
-#     global is_classifying
-#     is_classifying = data.get("active", False)
-#     print(f"🤖 Classification: {'ON' if is_classifying else 'OFF'}")
+# Handle classification state from backend
+is_classifying = False
+
+@sio.event
+def classification_state(data):
+    global is_classifying
+    is_classifying = data.get("active", False)
+    print(f"🤖 Classification: {'ON' if is_classifying else 'OFF'}")
 
 def socket_loop():
     while True:
@@ -104,6 +121,9 @@ def camera_indices_from_by_id():
     return sorted(set(indices))
 
 def find_camera_indices():
+    if USE_LAPTOP_CAMERA:
+        return [0, 1, 2]
+
     preferred = camera_indices_from_by_id()
 
     if preferred:
@@ -170,40 +190,39 @@ class CameraReader(threading.Thread):
     # ─────────────────────────
     def try_open(self, index):
 
-        path = f"/dev/video{index}"
-
-        print(f"📷 Opening {path}")
-
-        cap = cv2.VideoCapture(
-            path,
-            cv2.CAP_V4L2
-        )
+        if USE_LAPTOP_CAMERA:
+            path = f"Laptop Camera {index}"
+            print(f"📷 Opening {path}")
+            cap = cv2.VideoCapture(index, cv2.CAP_DSHOW) if os.name == 'nt' else cv2.VideoCapture(index)
+            if not cap.isOpened():
+                cap = cv2.VideoCapture(index)
+        else:
+            path = f"/dev/video{index}"
+            print(f"📷 Opening {path}")
+            # Ưu tiên mở bằng index trước với backend V4L2
+            cap = cv2.VideoCapture(index, cv2.CAP_V4L2)
+            
+            if not cap.isOpened():
+                # Nếu thất bại, thử mở bằng path với backend V4L2
+                cap = cv2.VideoCapture(path, cv2.CAP_V4L2)
 
         if not cap.isOpened():
             print(f"❌ Cannot open {path}")
             return None
 
-        # VERY IMPORTANT ORDER
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        # Không ép buộc BUFFERSIZE=1 vì một số camera USB rẻ tiền bị lỗi select() timeout
+        # Tuy nhiên nếu dùng camera laptop (độ ổn định cao) thì bật lên để giảm độ trễ (latency).
+        if USE_LAPTOP_CAMERA:
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-        cap.set(
-            cv2.CAP_PROP_FRAME_WIDTH,
-            CAMERA_WIDTH
-        )
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
 
-        cap.set(
-            cv2.CAP_PROP_FRAME_HEIGHT,
-            CAMERA_HEIGHT
-        )
+        # Ép phần cứng chạy ở 30 FPS nếu được hỗ trợ
+        cap.set(cv2.CAP_PROP_FPS, 30)
 
-        cap.set(
-            cv2.CAP_PROP_FOURCC,
-            cv2.VideoWriter_fourcc(*'MJPG')
-        )
-
-        # DO NOT SET FPS
-        # DO NOT SET EXPOSURE
-        # DO NOT SET AUTOFOCUS
+        # Không ép buộc MJPG, để OpenCV tự chọn format (thường là YUYV)
+        # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
         # warmup
         print("⏳ Camera warmup...")
@@ -235,6 +254,18 @@ class CameraReader(threading.Thread):
     # open any available camera
     # ─────────────────────────
     def open_camera(self):
+
+        try:
+            import subprocess
+            print("---- USB Devices ----")
+            print(subprocess.check_output(["lsusb"], stderr=subprocess.STDOUT, text=True))
+            print("---- Video Nodes ----")
+            print(subprocess.check_output("ls -l /dev/video* || true", shell=True, stderr=subprocess.STDOUT, text=True))
+            print("---- V4L By-ID ----")
+            print(subprocess.check_output("ls -l /dev/v4l/by-id/* || true", shell=True, stderr=subprocess.STDOUT, text=True))
+            print("----------------------")
+        except Exception as e:
+            pass
 
         indices = find_camera_indices()
 
@@ -411,17 +442,17 @@ class InferenceWorker(threading.Thread):
 
             # Filter theo confidence threshold
             if probability < CONFIDENCE_THRESHOLD:
-                print(f"📊 {tag_name}: {probability:.1%} (below threshold)")
-                return
+                print(f"📊 {tag_name}: {probability:.1%} (below threshold) -> Unknown")
+                tag_name = "Unknown"
+            else:
+                # In kết quả
+                print(f"🎯 {tag_name}: {probability:.1%}")
 
-            # In kết quả
-            print(f"🎯 {tag_name}: {probability:.1%}")
-
-            # Save snapshot (optional)
+            # Lưu ảnh vào ổ cứng QCS6490 (vẫn giữ để backup local)
             self._save_snapshot(frame, tag_name, probability)
 
-            # Emit tới backend socket (optional)
-            self._emit_result(tag_name, probability)
+            # Bắn thẳng data + base64 image qua HTTP API để backend tự save
+            self._emit_result(tag_name, probability, frame)
 
         except Exception as e:
             print(f"⚠️  Error parsing result: {e}")
@@ -436,21 +467,34 @@ class InferenceWorker(threading.Thread):
             filename = f"{SNAPSHOT_DIR}/{tag_name}_{probability:.0%}_{timestamp}.jpg"
             cv2.imwrite(filename, frame)
             print(f"📸 Saved: {filename}")
+            return filename
         except Exception as e:
             print(f"⚠️  Cannot save snapshot: {e}")
+            return None
 
-    def _emit_result(self, tag_name, probability):
-        """Gửi kết quả tới backend qua WebSocket (optional)."""
+    def _emit_result(self, tag_name, probability, frame=None):
+        """Gửi kết quả tới backend qua REST API, đính kèm ảnh base64."""
         try:
-            if sio.connected:
-                sio.emit('classification_result', {
-                    'fruit_type': 'APPLE',  # Or detect from tag_name
-                    'quality_status': tag_name,
-                    'confidence': round(probability * 100, 2),
-                    'timestamp': time.time()
-                })
-        except Exception:
-            pass  # Silent fail
+            payload = {
+                'fruit_type': 'APPLE',
+                'status': tag_name.capitalize(),
+                'quality_score': round(probability * 100, 2),
+                'confidence': round(probability * 100, 2),
+                'inference_ms': 200
+            }
+            if frame is not None:
+                import base64
+                # Nén ảnh với chất lượng 85% để không bị quá nặng khi gửi HTTP
+                ok, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                if ok:
+                    b64 = base64.b64encode(buffer).decode("utf-8")
+                    payload['snapshot_url'] = f"data:image/jpeg;base64,{b64}"
+
+            response = requests.post(BACKEND_API_URL, json=payload, timeout=2)
+            if response.status_code != 201:
+                print(f"⚠️ Backend sync error: {response.status_code}")
+        except Exception as e:
+            print(f"⚠️ Backend sync failed: {e}")
 
     def stop(self):
         self.running = False
@@ -543,6 +587,9 @@ stream_interval = 1.0 / STREAM_FPS
 last_stream = 0
 last_infer = 0
 
+last_telemetry = time.time()
+frame_count = 0
+
 encode_params = [
     cv2.IMWRITE_JPEG_QUALITY,
     STREAM_QUALITY
@@ -554,16 +601,38 @@ while True:
 
     # throttle FPS
     if now - last_stream < stream_interval:
-        time.sleep(0.005)
+        # Bỏ hẳn time.sleep() để CPU busy-wait nhằm vượt qua độ trễ Windows scheduler
         continue
 
     frame = cam.get_frame()
 
     if frame is None:
-        time.sleep(0.05)
+        time.sleep(0.01)
         continue
 
+    # Lật ngược hình ảnh (Mirror) để tạo cảm giác camera trước (front-facing)
+    if USE_LAPTOP_CAMERA:
+        frame = cv2.flip(frame, 1)
+
     last_stream = now
+    frame_count += 1
+
+    # ───── TELEMETRY: mỗi 1 giây ─────
+    if now - last_telemetry >= 1.0:
+        current_fps = frame_count
+        frame_count = 0
+        last_telemetry = now
+        
+        def send_telemetry(f):
+            try:
+                requests.post(BACKEND_API_URL.replace("/inferences", "/telemetry"), json={
+                    "fps": f,
+                    "inference_ms": 200 if is_classifying else 0,
+                    "status": "Classifying" if is_classifying else "Idle"
+                }, timeout=1)
+            except:
+                pass
+        threading.Thread(target=send_telemetry, args=(current_fps,), daemon=True).start()
 
     # resize
     if STREAM_SCALE != 1.0:
@@ -594,8 +663,9 @@ while True:
 
     # ───── AI INFERENCE: mỗi 2 giây ─────
     if now - last_infer >= INFERENCE_INTERVAL:
-        # Get full-size frame for AI (not resized)
-        full_frame = cam.get_frame()
-        if full_frame is not None:
-            inferrer.submit(full_frame)  # Non-blocking
+        if is_classifying:
+            # Get full-size frame for AI (not resized)
+            full_frame = cam.get_frame()
+            if full_frame is not None:
+                inferrer.submit(full_frame)  # Non-blocking
         last_infer = now

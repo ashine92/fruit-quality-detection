@@ -42,6 +42,19 @@ db.exec(`
   );
 `);
 
+// Migrations: Add new columns to existing 'inferences' table if it was created before they existed
+try {
+  db.exec("ALTER TABLE inferences ADD COLUMN human_label TEXT DEFAULT NULL;");
+} catch (err) {
+  // Ignore error if column already exists
+}
+
+try {
+  db.exec("ALTER TABLE inferences ADD COLUMN is_corrected INTEGER DEFAULT 0;");
+} catch (err) {
+  // Ignore error if column already exists
+}
+
 console.log(`✅ SQLite connected: ${DB_PATH}`);
 
 export default db;
