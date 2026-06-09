@@ -4,11 +4,13 @@ import { persist } from 'zustand/middleware';
 export const useUIStore = create(
   persist(
     (set) => ({
-      currentView: 'dashboard',
+      currentView: 'home',
       confidenceFilter: 0,
       isDarkMode: false,
+      isSidebarCollapsed: false,
       setView: (view) => set({ currentView: view }),
       setConfidenceFilter: (val) => set({ confidenceFilter: val }),
+      toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
       toggleDarkMode: () => set((state) => {
         const next = !state.isDarkMode;
         if (next) {

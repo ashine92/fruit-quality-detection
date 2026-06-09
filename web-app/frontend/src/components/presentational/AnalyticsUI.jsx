@@ -2,12 +2,12 @@
  * AnalyticsUI — Presentational Component
  * KPI cards, live charts, search/filter, CSV export, skeleton loading
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { RefreshCw, X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle } from 'lucide-react';
+import { RefreshCw, X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle, Undo2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const CLASS_COLORS = {
@@ -62,10 +62,17 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 /* ── Main Component ── */
-export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign }) {
+export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign, onLabelRemove }) {
   const [selectedLog, setSelectedLog] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('All');
+
+  // Sync selectedLog with live data after label mutation refetch
+  useEffect(() => {
+    if (!selectedLog || !logs) return;
+    const updated = logs.find(l => l.rawId === selectedLog.rawId);
+    if (updated) setSelectedLog(updated);
+  }, [logs]);
 
   /* CSV Export */
   const handleExportCSV = () => {
@@ -397,25 +404,43 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign 
               {/* Label section */}
               <div className="w-full border-t border-outline-variant pt-4">
                 <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-3 text-center">Human Verification</p>
+
                 {selectedLog.isCorrected ? (
-                  <div className="bg-primary/10 text-primary p-3 rounded-xl text-center font-bold text-sm border border-primary/20">
-                    ✓ Labelled as: {selectedLog.humanLabel}
+                  <div className="space-y-2">
+                    <div className="bg-primary/10 text-primary p-3 rounded-xl text-center font-bold text-sm border border-primary/20">
+                      ✓ Đã gán nhãn: <strong>{selectedLog.humanLabel}</strong>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (onLabelRemove) onLabelRemove(selectedLog.rawId);
+                        // Optimistic update
+                        setSelectedLog({ ...selectedLog, isCorrected: 0, humanLabel: null });
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-outline-variant text-xs font-bold text-on-surface-variant hover:bg-surface-container hover:text-red-500 hover:border-red-300 transition-all"
+                    >
+                      <Undo2 className="w-3.5 h-3.5" />
+                      Hoàn tác nhãn
+                    </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-2">
-                    {CLASS_LABELS.map(label => (
-                      <button
-                        key={label}
-                        onClick={() => {
-                          if (onLabelAssign) onLabelAssign(selectedLog.rawId, label);
-                          setSelectedLog({ ...selectedLog, isCorrected: 1, humanLabel: label });
-                        }}
-                        className="py-2.5 text-xs font-black rounded-xl border transition-all hover:scale-105 active:scale-95 text-white"
-                        style={{ backgroundColor: CLASS_COLORS[label], borderColor: CLASS_COLORS[label] + '44' }}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-on-surface-variant text-center mb-2">Chọn nhãn đúng cho ảnh này:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {CLASS_LABELS.map(label => (
+                        <button
+                          key={label}
+                          onClick={() => {
+                            if (onLabelAssign) onLabelAssign(selectedLog.rawId, label);
+                            // Optimistic update — will be overwritten by useEffect sync
+                            setSelectedLog({ ...selectedLog, isCorrected: 1, humanLabel: label });
+                          }}
+                          className="py-2.5 text-xs font-black rounded-xl border transition-all hover:scale-105 active:scale-95 text-white"
+                          style={{ backgroundColor: CLASS_COLORS[label], borderColor: CLASS_COLORS[label] + '44' }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

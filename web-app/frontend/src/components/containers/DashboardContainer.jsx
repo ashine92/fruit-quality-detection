@@ -1,62 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { io } from 'socket.io-client';
 import { edgeApi } from '../../services/edgeApi';
 import DashboardUI from '../presentational/DashboardUI';
+import { useStream } from '../../context/StreamContext';
 
 export default function DashboardContainer() {
-  const imgRef = useRef(null);
-  const [isStreamActive, setIsStreamActive] = useState(false);
-  const streamTimeoutRef = useRef(null);
+  // All stream/PiP state lives in the global StreamContext
+  const {
+    imgRef,
+    isStreamActive,
+    isClassifying,
+    isPiP,
+    togglePiP,
+    toggleClassification,
+  } = useStream();
 
-  const [isClassifying, setIsClassifying] = useState(false);
-  const [socketRef, setSocketRef] = useState(null);
-
-  // Connect to WebSocket Server
-  useEffect(() => {
-    const socket = io(`http://${window.location.hostname}:5000`);
-    setSocketRef(socket);
-
-    socket.on('video_frame_downstream', (base64Frame) => {
-      // Bắn trực tiếp frame vào DOM để khỏi phải render lại nguyên cái React component (Tối ưu độ trễ)
-      if (imgRef.current) {
-        imgRef.current.src = base64Frame;
-      }
-      setIsStreamActive(true);
-      
-      clearTimeout(streamTimeoutRef.current);
-      streamTimeoutRef.current = setTimeout(() => setIsStreamActive(false), 2000);
-    });
-
-    socket.on('classification_state', (data) => {
-      setIsClassifying(data.active);
-    });
-
-    return () => socket.disconnect();
-  }, []);
-
-  const toggleClassification = () => {
-    if (socketRef) {
-      socketRef.emit('set_classification_state', { active: !isClassifying });
-    }
-  };
-
+  // ── Snapshot capture ──────────────────────────────────
   const handleCaptureSnapshot = async () => {
     if (!imgRef.current || !imgRef.current.src.startsWith('data:image')) {
-      alert("No video stream to capture!");
+      alert('No video stream to capture!');
       return;
     }
     try {
       const res = await edgeApi.saveSnapshot(imgRef.current.src);
-      if (res.success) {
-        alert("Snapshot saved successfully: " + res.url);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save snapshot");
+      if (res.success) alert('Snapshot saved: ' + res.url);
+    } catch {
+      alert('Failed to save snapshot');
     }
   };
 
+  // ── Queries ────────────────────────────────────────────
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['production-stats'],
     queryFn: () => edgeApi.getProductionStats(),
@@ -78,8 +50,10 @@ export default function DashboardContainer() {
   if (statsLoading || telLoading || logsLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-outline-variant border-t-primary rounded-full animate-spin"></div>
-        <p className="text-label-bold text-on-surface-variant animate-pulse uppercase tracking-widest text-[10px]">Syncing with Edge AI Engine...</p>
+        <div className="w-12 h-12 border-4 border-outline-variant border-t-primary rounded-full animate-spin" />
+        <p className="text-on-surface-variant animate-pulse uppercase tracking-widest text-[10px]">
+          Syncing with Edge AI Engine...
+        </p>
       </div>
     );
   }
@@ -96,6 +70,8 @@ export default function DashboardContainer() {
       isClassifying={isClassifying}
       onToggleClassification={toggleClassification}
       onCaptureSnapshot={handleCaptureSnapshot}
+      onTogglePiP={togglePiP}
+      isPiP={isPiP}
     />
   );
 }

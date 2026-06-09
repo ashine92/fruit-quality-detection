@@ -3,7 +3,7 @@
  * Full redesign: Glassmorphism, count-up, confidence gauge, FPS overlay
  */
 import { useState, useEffect, useRef } from 'react';
-import { Activity, Camera, Play, Square, Leaf, Zap, CheckCircle, XCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Activity, Camera, Play, Square, Leaf, Zap, CheckCircle, XCircle, AlertCircle, TrendingUp, PictureInPicture2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 /* ── Count-Up Hook ── */
@@ -123,7 +123,9 @@ function Skeleton({ className = '' }) {
 export default function DashboardUI({
   stats, telemetry, latestLog,
   videoRef, isStreamActive,
-  isClassifying, onToggleClassification, onCaptureSnapshot
+  isClassifying, onToggleClassification,
+  onCaptureSnapshot,
+  onTogglePiP, isPiP,
 }) {
   if (!stats || !telemetry) {
     return (
@@ -227,6 +229,21 @@ export default function DashboardUI({
                 <Camera className="w-3 h-3 mr-1.5" />
                 Snapshot
               </button>
+              {/* PiP Button */}
+              {document.pictureInPictureEnabled && (
+                <button
+                  onClick={onTogglePiP}
+                  title={isPiP ? 'Exit Picture-in-Picture' : 'Picture-in-Picture'}
+                  className={`flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase transition-all border ${
+                    isPiP
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-surface-container border-outline-variant text-on-surface hover:bg-surface-container-high'
+                  }`}
+                >
+                  <PictureInPicture2 className="w-3 h-3 mr-1.5" />
+                  PiP
+                </button>
+              )}
             </div>
             <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ${isStreamActive ? 'text-red-500' : 'text-on-surface-variant'}`}>
               <span className={`h-2 w-2 rounded-full ${isStreamActive ? 'bg-red-500 animate-pulse' : 'bg-outline-variant'}`} />
