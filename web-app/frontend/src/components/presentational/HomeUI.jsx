@@ -174,7 +174,7 @@ export default function HomeUI() {
           </motion.h1>
 
           <motion.p variants={fadeInUp} className="text-lg lg:text-xl text-on-surface-variant max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-            Hệ thống phân loại chất lượng trái cây theo thời gian thực sử dụng trí tuệ nhân tạo trên thiết bị biên (Edge). Xử lý ảnh siêu tốc, giám sát từ xa và thống kê sản lượng chuyên nghiệp.
+            A real-time fruit quality sorting system powered by Artificial Intelligence on edge devices. Featuring ultra-fast image processing, remote monitoring, and professional yield analytics.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-4">
@@ -183,14 +183,14 @@ export default function HomeUI() {
               className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto rounded-2xl bg-gradient-primary text-white text-sm font-black uppercase tracking-wider shadow-xl shadow-primary/30 hover:scale-105 hover:shadow-primary/50 transition-all duration-300"
             >
               <Play className="w-5 h-5 fill-current" />
-              Mở Dashboard Ngay
+              Launch Dashboard
             </button>
             <button 
               onClick={() => setView('analytics')}
               className="flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto rounded-2xl glass-card border-outline-variant text-on-surface text-sm font-bold hover:bg-surface-container transition-all duration-300"
             >
               <BarChart3 className="w-5 h-5" />
-              Xem Báo Cáo
+              View Analytics
             </button>
           </motion.div>
         </motion.div>

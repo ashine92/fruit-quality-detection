@@ -116,10 +116,10 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
         </div>
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 py-2 rounded-xl glass-card text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">
-            Hủy
+            Cancel
           </button>
           <button onClick={onConfirm} className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-black hover:bg-red-600 transition-colors">
-            Xác nhận xóa
+            Confirm Delete
           </button>
         </div>
       </motion.div>
@@ -238,7 +238,7 @@ export default function HistoryUI({
           <button
             onClick={onCleanup}
             disabled={isCleaningUp}
-            title="Xóa các bản ghi DB không còn file ảnh trên disk"
+            title="Delete DB records with missing image files on disk"
             className="flex items-center px-3.5 py-2 rounded-xl glass-card text-[11px] font-bold uppercase tracking-wider text-amber-600 hover:bg-amber-50 transition-colors border border-amber-200/50 disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
@@ -255,7 +255,7 @@ export default function HistoryUI({
             }`}
           >
             {selectMode ? <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> : <Square className="w-3.5 h-3.5 mr-1.5" />}
-            {selectMode ? 'Đang chọn' : 'Chọn nhiều'}
+            {selectMode ? 'Selecting' : 'Select Multiple'}
           </button>
 
           <button
@@ -278,10 +278,10 @@ export default function HistoryUI({
           >
             <div className="flex items-center gap-3">
               <button onClick={toggleSelectAll} className="text-[11px] font-bold text-primary hover:underline">
-                {selectedIds.size === paginated.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả trang này'}
+                {selectedIds.size === paginated.length ? 'Deselect All' : 'Select All on Page'}
               </button>
               <span className="text-[11px] text-on-surface-variant">
-                {selectedIds.size} đã chọn
+                {selectedIds.size} selected
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -291,7 +291,7 @@ export default function HistoryUI({
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-500 text-white text-[11px] font-black uppercase hover:bg-red-600 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Xóa {selectedIds.size} ảnh
+                  Delete {selectedIds.size} images
                 </button>
               )}
               <button onClick={exitSelectMode} className="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors">
@@ -403,7 +403,7 @@ export default function HistoryUI({
                   <button
                     onClick={() => setConfirmDel({ type: 'single', id: selectedLog.rawId })}
                     className="p-2 rounded-full hover:bg-red-50 text-on-surface-variant hover:text-red-500 transition-colors"
-                    title="Xóa ảnh này"
+                    title="Delete this image"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -449,7 +449,7 @@ export default function HistoryUI({
                   {selectedLog.isCorrected ? (
                     <div className="space-y-2">
                       <div className="bg-primary/10 text-primary p-3 rounded-xl text-center font-bold text-sm border border-primary/20">
-                        ✓ Đã gán nhãn: <strong>{selectedLog.humanLabel}</strong>
+                        ✓ Assigned Label: <strong>{selectedLog.humanLabel}</strong>
                       </div>
                       <button
                         onClick={() => {
@@ -458,12 +458,12 @@ export default function HistoryUI({
                         }}
                         className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-outline-variant text-xs font-bold text-on-surface-variant hover:bg-surface-container hover:text-red-500 hover:border-red-300 transition-all"
                       >
-                        <Undo2 className="w-3.5 h-3.5" /> Hoàn tác nhãn
+                        <Undo2 className="w-3.5 h-3.5" /> Undo Label
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-on-surface-variant text-center">Chọn nhãn đúng cho ảnh này:</p>
+                      <p className="text-[10px] text-on-surface-variant text-center">Select correct label for this image:</p>
                       <div className="grid grid-cols-4 gap-2">
                         {['Ripe', 'Unripe', 'Overripe', 'Rotten'].map(label => (
                           <button
@@ -492,7 +492,7 @@ export default function HistoryUI({
       <AnimatePresence>
         {confirmDelAll && (
           <ConfirmModal
-            message={`Xóa TẤT CẢ ${logs?.length || 0} records và toàn bộ ảnh snapshot? Hành động này KHÔNG THỂ hoàn tác!`}
+            message={`Delete ALL ${logs?.length || 0} records and all snapshots? This action CANNOT be undone!`}
             onConfirm={() => { onDeleteAll(); setConfirmDelAll(false); }}
             onCancel={() => setConfirmDelAll(false)}
           />
@@ -505,8 +505,8 @@ export default function HistoryUI({
           <ConfirmModal
             message={
               confirmDel.type === 'bulk'
-                ? `Xóa ${selectedIds.size} ảnh đã chọn? Hành động này không thể hoàn tác.`
-                : 'Xóa ảnh này khỏi hệ thống? Hành động này không thể hoàn tác.'
+                ? `Delete ${selectedIds.size} selected images? This action cannot be undone.`
+                : 'Delete this image from the system? This action cannot be undone.'
             }
             onConfirm={doDelete}
             onCancel={() => setConfirmDel(null)}

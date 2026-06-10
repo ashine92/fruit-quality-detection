@@ -1,6 +1,6 @@
 import { 
   LayoutDashboard, BarChart3, History, Leaf, 
-  Moon, Sun, Cpu, Home, ScanLine, ChevronLeft, ChevronRight 
+  Moon, Sun, Cpu, Home, ScanLine, ChevronLeft, ChevronRight, Info 
 } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,6 +18,7 @@ export default function Sidebar() {
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'classify',  label: 'Classify',  icon: ScanLine },
     { id: 'history',   label: 'History',   icon: History },
+    { id: 'about',     label: 'About Us',  icon: Info },
   ];
 
   return (

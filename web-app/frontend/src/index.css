@@ -59,20 +59,20 @@
   /* ── Dark Mode ── */
   .dark body,
   body.dark {
-    --color-surface:                   #052e16;
-    --color-surface-dim:               #021c0e;
-    --color-surface-bright:            #064e20;
-    --color-surface-container-lowest:  #021c0e;
-    --color-surface-container-low:     #052e16;
-    --color-surface-container:         #064e20;
-    --color-surface-container-high:    #086b2b;
-    --color-surface-container-highest: #0a7a30;
+    --color-surface:                   #021c0e;
+    --color-surface-dim:               #011108;
+    --color-surface-bright:            #052e16;
+    --color-surface-container-lowest:  #011108;
+    --color-surface-container-low:     #021c0e;
+    --color-surface-container:         #052e16;
+    --color-surface-container-high:    #064e20;
+    --color-surface-container-highest: #086b2b;
     --color-on-surface:                #d1fae5;
     --color-on-surface-variant:        #6ee7b7;
     --color-outline:                   #059669;
     --color-outline-variant:           #064e20;
-    --bg-glass:      rgba(5, 46, 22, 0.70);
-    --bg-glass-dark: rgba(2, 28, 14, 0.85);
+    --bg-glass:      rgba(2, 28, 14, 0.70);
+    --bg-glass-dark: rgba(1, 17, 8, 0.85);
     --border-glass:  rgba(16, 185, 129, 0.20);
     --shadow-glow:   0 0 40px rgba(16, 185, 129, 0.12);
   }

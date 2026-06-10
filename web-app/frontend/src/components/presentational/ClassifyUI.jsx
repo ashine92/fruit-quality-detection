@@ -244,7 +244,7 @@ export default function ClassifyUI() {
             Image Classify
           </h1>
           <p className="text-sm text-on-surface-variant mt-0.5">
-            Upload ảnh chuối để AI phân loại · Tối đa {MAX_FILES} ảnh · {MAX_SIZE_MB}MB/ảnh
+            Upload fruit images for AI classification · Max {MAX_FILES} images · {MAX_SIZE_MB}MB/image
           </p>
         </div>
         {hasFiles && (
@@ -291,9 +291,9 @@ export default function ClassifyUI() {
               <Upload className="w-8 h-8 text-primary" />
             </motion.div>
             <div className="text-center">
-              <p className="text-base font-bold text-on-surface">Kéo thả ảnh vào đây</p>
-              <p className="text-sm text-on-surface-variant mt-1">hoặc <span className="text-primary font-bold underline">chọn từ máy tính</span></p>
-              <p className="text-[11px] text-on-surface-variant mt-2 opacity-70">JPG, PNG, WEBP · Tối đa {MAX_FILES} ảnh · {MAX_SIZE_MB}MB/ảnh</p>
+              <p className="text-base font-bold text-on-surface">Drag and drop images here</p>
+              <p className="text-sm text-on-surface-variant mt-1">or <span className="text-primary font-bold underline">browse files</span></p>
+              <p className="text-[11px] text-on-surface-variant mt-2 opacity-70">JPG, PNG, WEBP · Max {MAX_FILES} images · {MAX_SIZE_MB}MB/image</p>
             </div>
           </div>
         ) : (
@@ -317,7 +317,7 @@ export default function ClassifyUI() {
               )}
             </div>
             <p className="text-[10px] text-on-surface-variant px-1">
-              {files.length}/{MAX_FILES} ảnh đã chọn
+              {files.length}/{MAX_FILES} images selected
             </p>
           </div>
         )}
@@ -325,7 +325,7 @@ export default function ClassifyUI() {
         {/* Drag overlay */}
         {isDragging && (
           <div className="absolute inset-0 rounded-2xl bg-primary/10 flex items-center justify-center pointer-events-none">
-            <p className="text-primary font-black text-lg">Thả ảnh vào đây!</p>
+            <p className="text-primary font-black text-lg">Drop images here!</p>
           </div>
         )}
       </div>
@@ -339,9 +339,9 @@ export default function ClassifyUI() {
             className="flex items-center gap-2.5 px-8 py-3.5 rounded-2xl bg-gradient-primary text-white font-black text-sm uppercase tracking-widest shadow-xl glow-green hover:opacity-90 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {status === 'loading' ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> Đang phân tích {files.length} ảnh...</>
+              <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing {files.length} images...</>
             ) : (
-              <><Zap className="w-5 h-5" /> Phân loại {files.length} ảnh</>
+              <><Zap className="w-5 h-5" /> Classify {files.length} images</>
             )}
           </button>
         </motion.div>
@@ -352,9 +352,9 @@ export default function ClassifyUI() {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
           <XCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-sm">Phân loại thất bại</p>
+            <p className="font-bold text-sm">Classification failed</p>
             <p className="text-xs mt-0.5">{errorMsg}</p>
-            <p className="text-xs mt-1 opacity-70">Hãy chắc chắn mock_ai.py đang chạy ở port 5001.</p>
+            <p className="text-xs mt-1 opacity-70">Ensure the AI service (mock_ai.py) is running on port 5001.</p>
           </div>
         </div>
       )}
@@ -367,7 +367,7 @@ export default function ClassifyUI() {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-primary" />
               <p className="font-bold text-on-surface text-sm">
-                Phân loại xong <span className="text-primary">{results.length} ảnh</span>
+                Successfully classified <span className="text-primary">{results.length} images</span>
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -402,7 +402,7 @@ export default function ClassifyUI() {
               onClick={clearAll}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl glass-card text-[11px] font-bold uppercase tracking-wider text-on-surface hover:bg-surface-container transition-colors"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Phân loại ảnh khác
+              <RefreshCw className="w-3.5 h-3.5" /> Classify new images
             </button>
           </div>
         </div>
