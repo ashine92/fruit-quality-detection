@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luồng hoạt động – Fruit Quality Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1f2937;
+      --border:    #30363d;
+
+      --green:     #22c55e;
+      --green-dim: #166534;
+      --blue:      #3b82f6;
+      --blue-dim:  #1e3a5f;
+      --cyan:      #06b6d4;
+      --cyan-dim:  #164e63;
+      --purple:    #a855f7;
+      --purple-dim:#4a1d96;
+      --amber:     #f59e0b;
+      --amber-dim: #78350f;
+      --red:       #ef4444;
+      --red-dim:   #7f1d1d;
+      --orange:    #f97316;
+      --orange-dim:#7c2d12;
+      --pink:      #ec4899;
+      --gray:      #6b7280;
+      --text:      #e2e8f0;
+      --text-dim:  #94a3b8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    header h1 {
+      font-size: clamp(22px, 4vw, 36px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+    header p {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 56px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ── DIAGRAM WRAPPER ── */
+    .diagram {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── COLUMNS ── */
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr 1fr;
+      gap: 0 40px;
+      align-items: start;
+    }
+
+    /* ── LAYER LABELS ── */
+    .layer-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    /* ── SECTION HEADERS ── */
+    .col-header {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 8px 8px 0 0;
+      margin-bottom: 24px;
+    }
+    .col-header.hardware { background: linear-gradient(135deg,#1e3a5f,#164e63); color:#93c5fd; border:1px solid #1d4ed8; }
+    .col-header.edge     { background: linear-gradient(135deg,#4a1d96,#1e1b4b); color:#c4b5fd; border:1px solid #7c3aed; }
+    .col-header.web      { background: linear-gradient(135deg,#166534,#14532d); color:#86efac; border:1px solid #16a34a; }
+
+    /* ── NODE BASE ── */
+    .node {
+      position: relative;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 0;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+      border: 1.5px solid transparent;
+      transition: transform .2s, box-shadow .2s;
+      cursor: default;
+      text-align: center;
+    }
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    .node .node-icon {
+      font-size: 20px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .node .node-title {
+      font-weight: 700;
+      font-size: 13px;
+      display: block;
+    }
+    .node .node-sub {
+      font-size: 11px;
+      opacity: .75;
+      display: block;
+      margin-top: 3px;
+    }
+    .node .node-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.12);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 6px;
+    }
+
+    /* colours */
+    .node-start  { background:#1e293b; border-color:#475569; }
+    .node-hw     { background:#1e3a5f; border-color:#2563eb; color:#bfdbfe; }
+    .node-edge   { background:#1e1b4b; border-color:#6d28d9; color:#ddd6fe; }
+    .node-ai     { background:#312e81; border-color:#7c3aed; color:#e9d5ff; }
+    .node-good   { background:#14532d; border-color:#16a34a; color:#86efac; }
+    .node-bad    { background:#7f1d1d; border-color:#dc2626; color:#fca5a5; }
+    .node-db     { background:#1c1917; border-color:#78350f; color:#fdba74; }
+    .node-backend{ background:#134e4a; border-color:#0f766e; color:#99f6e4; }
+    .node-ws     { background:#1e3a5f; border-color:#0284c7; color:#bae6fd; }
+    .node-ui     { background:#2d1d4e; border-color:#9333ea; color:#e9d5ff; }
+    .node-diamond{ background:#1c2537; border-color:#4b5563; }
+    .node-telemetry{background:#1c1917;border-color:#92400e;color:#fde68a;}
+
+    /* ── DIAMOND ── */
+    .diamond-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .diamond-box {
+      width: 140px;
+      height: 70px;
+      background: #1c2537;
+      border: 2px solid #4b5563;
+      transform: rotate(0deg);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-align: center;
+      padding: 8px;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      transition: transform .2s;
+      cursor: default;
+    }
+    .diamond-box:hover { transform: scale(1.04); }
+    .diamond-box.conf  { background:#312e81; border-color:#7c3aed; color:#c4b5fd; }
+    .diamond-box.class { background:#1e3a5f; border-color:#2563eb; color:#93c5fd; }
+
+    /* ── ARROWS ── */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .arrow-line {
+      width: 2px;
+      background: linear-gradient(to bottom, #475569, #334155);
+      flex-grow: 1;
+      min-height: 20px;
+    }
+    .arrow-head {
+      width: 0; height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 10px solid #475569;
+    }
+    .arrow-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin: 2px 0;
+    }
+    .label-yes  { background: #14532d; color: #86efac; }
+    .label-no   { background: #7f1d1d; color: #fca5a5; }
+    .label-ok   { background: #1e3a5f; color: #93c5fd; }
+    .label-err  { background: #78350f; color: #fdba74; }
+    .label-ws   { background: #164e63; color: #67e8f9; }
+    .label-http { background: #1e3a5f; color: #bae6fd; }
+
+    /* ── FLOW CONTAINER ── */
+    .flow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+    .flow-col .node { margin: 0; }
+    .flow-col .arrow { min-height: 28px; }
+
+    /* ── SIDE BRANCHES ── */
+    .branch-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      position: relative;
+    }
+
+    /* ── HORIZONTAL CONNECTORS ── */
+    .h-arrow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      position: relative;
+    }
+    .h-line {
+      height: 2px;
+      background: linear-gradient(to right, #475569, #334155);
+      min-width: 24px;
+      flex-grow: 1;
+    }
+    .h-arrow-head-r {
+      width: 0; height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 10px solid #475569;
+    }
+    .h-arrow-head-l {
+      width: 0; height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-right: 10px solid #475569;
+    }
+
+    /* ── GROUPED BLOCKS ── */
+    .group-box {
+      border: 1.5px dashed;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 8px 0;
+      position: relative;
+    }
+    .group-box .group-label {
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .group-edge { border-color: #7c3aed; }
+    .group-edge .group-label { background: #4c1d95; color: #ddd6fe; }
+    .group-web  { border-color: #0f766e; }
+    .group-web  .group-label { background: #134e4a; color: #99f6e4; }
+    .group-hw   { border-color: #2563eb; }
+    .group-hw   .group-label { background: #1e3a5f; color: #bfdbfe; }
+
+    /* ── MAIN 3-COLUMN GRID ── */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 300px 360px 300px;
+      column-gap: 0;
+      row-gap: 0;
+      align-items: start;
+      justify-content: center;
+    }
+
+    .col { display: flex; flex-direction: column; align-items: center; }
+    .col .node { width: 100%; }
+
+    /* ── CROSS-COL ARROWS (SVG overlay) ── */
+    .diagram-wrap {
+      position: relative;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      margin-top: 64px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* small utilities */
+    .mt8  { margin-top: 8px; }
+    .mt16 { margin-top: 16px; }
+    .mb8  { margin-bottom: 8px; }
+    .w100 { width: 100%; }
+    .center { text-align: center; }
+
+    /* ── STEP NUMBER ── */
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 800;
+      margin-right: 6px;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    /* ── SCROLL HINT ── */
+    .scroll-hint {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-bottom: 24px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:.6; } 50% { opacity:1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <div class="badge">IoT in Factory · Edge AI</div>
+  <h1>Luồng hoạt động hệ thống<br>Phân loại chất lượng trái cây</h1>
+  <p>Fruit Quality Detection – Sơ đồ kiến trúc & luồng dữ liệu thực tế</p>
+</header>
+
+<!-- ─── LEGEND ─── -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Hardware / Camera</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Edge AI (QCS6490)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>WebSocket Stream</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Azure Custom Vision AI</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Backend (Node.js)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>Frontend (React)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Rejected (Lỗi/Chưa chín)</div>
+</div>
+
+<p class="scroll-hint">↕ Cuộn xuống để xem toàn bộ luồng</p>
+
+<!-- ════════════════════════════════════════════════
+     MAIN DIAGRAM
+════════════════════════════════════════════════ -->
+<div class="diagram">
+
+  <!-- ══════ ROW 0: START ══════ -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div class="node node-start" style="width:220px;border-radius:999px;padding:10px 32px;">
+      <span class="node-icon">🚀</span>
+      <span class="node-title">Bắt đầu</span>
+    </div>
+  </div>
+  <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+    <div class="arrow-line" style="min-height:18px;"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- ══════ ROW 1: INIT ══════ -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div class="node node-edge" style="width:520px;">
+      <span class="node-icon">⚙️</span>
+      <span class="node-title"><span class="step-num">1</span>Khởi động hệ thống (Edge Device – QCS6490)</span>
+      <span class="node-sub">Kết nối WebSocket → Backend · Tìm Camera USB · Load AI Model endpoint · Khởi tạo các thread</span>
+      <span class="node-tag">realtime.py</span>
+    </div>
+  </div>
+  <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+    <div class="arrow-line" style="min-height:18px;"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- ══════ ROW 2: 3-THREAD OVERVIEW ══════ -->
+  <div style="display:flex;justify-content:center;margin-bottom:32px;">
+    <div class="group-box group-edge" style="width:740px;">
+      <span class="group-label">3 Luồng chạy song song (Daemon Threads)</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px;">
+
+        <!-- Thread 1: Camera -->
+        <div class="node node-hw" style="text-align:center;">
+          <span class="node-icon">📷</span>
+          <span class="node-title">CameraReader Thread</span>
+          <span class="node-sub">Liên tục đọc frame từ USB Camera · Validate (brightness, variance) · Lưu frame mới nhất vào bộ nhớ</span>
+          <span class="node-tag">640×480 · 30 FPS</span>
+        </div>
+
+        <!-- Thread 2: Inference -->
+        <div class="node node-ai" style="text-align:center;">
+          <span class="node-icon">🤖</span>
+          <span class="node-title">InferenceWorker Thread</span>
+          <span class="node-sub">Mỗi 2 giây lấy frame từ CameraReader · Encode JPEG · POST tới AI Model (port 8080)</span>
+          <span class="node-tag">Interval: 2s</span>
+        </div>
+
+        <!-- Thread 3: Stream -->
+        <div class="node node-ws" style="text-align:center;">
+          <span class="node-icon">📡</span>
+          <span class="node-title">StreamWorker Thread</span>
+          <span class="node-sub">Resize frame (0.75×) · Encode Base64 JPEG · Emit qua WebSocket tới Backend</span>
+          <span class="node-tag">30 FPS · Quality 60</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ ROW 3: MAIN LOOP SPLIT ══════ -->
+  <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:0;max-width:900px;margin:0 auto 0;">
+
+    <!-- LEFT: AI INFERENCE FLOW -->
+    <div class="col" style="align-items:stretch;">
+      <div class="node node-ai" style="text-align:center;">
+        <span class="node-icon">📸</span>
+        <span class="node-title"><span class="step-num">2</span>Chụp & Encode Frame</span>
+        <span class="node-sub">cam.get_frame() → cv2.imencode('.jpg') → BytesIO</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="node node-ai" style="text-align:center;">
+        <span class="node-icon">🌐</span>
+        <span class="node-title"><span class="step-num">3</span>Gửi tới Azure Custom Vision</span>
+        <span class="node-sub">POST multipart/form-data → http://127.0.0.1:8080/image<br>(Nginx proxy → Custom Vision container)</span>
+        <span class="node-tag">timeout: 5s</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="node node-ai" style="text-align:center; background:#312e81; border-color:#f59e0b;">
+        <span class="node-icon">🧠</span>
+        <span class="node-title"><span class="step-num">4</span>Azure Custom Vision Model</span>
+        <span class="node-sub">Trả về JSON predictions:<br>[ {tagName, probability}, … ]</span>
+        <span class="node-tag" style="background:rgba(245,158,11,.2);color:#fbbf24;">AI Inference</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <!-- CONFIDENCE CHECK DIAMOND -->
+      <div class="diamond-wrap">
+        <div class="diamond-box conf" style="width:160px;height:80px;font-size:11px;">
+          Confidence<br>≥ 70%?
+        </div>
+      </div>
+
+      <!-- YES / NO branches -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <div class="col" style="align-items:center;">
+          <div class="arrow-label label-yes" style="margin-bottom:4px;">✓ CÓ</div>
+          <div class="arrow-line" style="width:2px;min-height:14px;background:#22c55e;"></div>
+          <div class="arrow-head" style="border-top-color:#22c55e;"></div>
+          <div class="node node-good mt8" style="text-align:center;width:100%;">
+            <span class="node-title">Kết quả hợp lệ</span>
+            <span class="node-sub">tagName: Ripe / Unripe / Overripe / Rotten</span>
+          </div>
+        </div>
+        <div class="col" style="align-items:center;">
+          <div class="arrow-label label-no" style="margin-bottom:4px;">✗ KHÔNG</div>
+          <div class="arrow-line" style="width:2px;min-height:14px;background:#ef4444;"></div>
+          <div class="arrow-head" style="border-top-color:#ef4444;"></div>
+          <div class="node node-bad mt8" style="text-align:center;width:100%;">
+            <span class="node-title">→ "Unknown"</span>
+            <span class="node-sub">Bỏ qua, không lưu DB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;margin-top:8px;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <!-- CLASSIFY CHECK -->
+      <div class="diamond-wrap">
+        <div class="diamond-box class" style="width:160px;height:80px;font-size:11px;">
+          Is Classifying<br>Active?
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <div class="col" style="align-items:center;">
+          <div class="arrow-label label-yes" style="margin-bottom:4px;">✓ BẬT</div>
+          <div class="arrow-line" style="width:2px;min-height:14px;background:#22c55e;"></div>
+          <div class="arrow-head" style="border-top-color:#22c55e;"></div>
+          <div class="node node-good mt8" style="text-align:center;width:100%;">
+            <span class="node-title"><span class="step-num">5</span>Gửi kết quả</span>
+            <span class="node-sub">POST /api/v1/inferences<br>+ ảnh Base64</span>
+          </div>
+        </div>
+        <div class="col" style="align-items:center;">
+          <div class="arrow-label label-no" style="margin-bottom:4px;">✗ TẮT</div>
+          <div class="arrow-line" style="width:2px;min-height:14px;background:#6b7280;"></div>
+          <div class="arrow-head" style="border-top-color:#6b7280;"></div>
+          <div class="node node-start mt8" style="text-align:center;width:100%;">
+            <span class="node-title">Bỏ qua</span>
+            <span class="node-sub">Chờ lệnh từ Dashboard</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Telemetry -->
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;margin-top:8px;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="node node-telemetry" style="text-align:center;">
+        <span class="node-icon">📊</span>
+        <span class="node-title"><span class="step-num">6</span>Gửi Telemetry (mỗi 1s)</span>
+        <span class="node-sub">POST /api/v1/telemetry<br>{ fps, inference_ms, status }</span>
+        <span class="node-tag">Interval: 1s</span>
+      </div>
+
+    </div>
+
+    <!-- CENTER DIVIDER -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:20px;">
+      <div style="width:2px;background:linear-gradient(to bottom,#475569,transparent);flex-grow:1;opacity:.3;"></div>
+    </div>
+
+    <!-- RIGHT: VIDEO STREAM FLOW -->
+    <div class="col" style="align-items:stretch;">
+      <div class="node node-ws" style="text-align:center;">
+        <span class="node-icon">🎥</span>
+        <span class="node-title"><span class="step-num">A</span>Video Stream (30 FPS)</span>
+        <span class="node-sub">Resize 0.75× · Encode Base64 JPEG (Q60) · Emit "video_frame_upstream" via Socket.IO</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-label label-ws">WebSocket</div>
+        <div class="arrow-line" style="min-height:8px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="node node-backend" style="text-align:center;">
+        <span class="node-icon">🖥️</span>
+        <span class="node-title"><span class="step-num">B</span>Backend Server (Node.js)</span>
+        <span class="node-sub">Socket.IO server nhận frame · Broadcast "video_frame_downstream" tới tất cả UI clients</span>
+        <span class="node-tag">Port 5000</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-label label-ws">Broadcast</div>
+        <div class="arrow-line" style="min-height:8px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="node node-ui" style="text-align:center;">
+        <span class="node-icon">📱</span>
+        <span class="node-title"><span class="step-num">C</span>React Dashboard (Frontend)</span>
+        <span class="node-sub">Hiển thị live video · Bật/tắt Classification · Xem lịch sử kết quả · Biểu đồ thống kê</span>
+        <span class="node-tag">Port 3000 · Vite</span>
+      </div>
+      <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+        <div class="arrow-line" style="min-height:16px;"></div>
+        <div class="arrow-label" style="background:#4c1d95;color:#ddd6fe;">set_classification_state</div>
+        <div class="arrow-line" style="min-height:8px;"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="node node-backend" style="text-align:center;border-color:#0891b2;">
+        <span class="node-icon">🔀</span>
+        <span class="node-title">Backend phát lệnh Classification</span>
+        <span class="node-sub">Broadcast "classification_state" { active: true/false } → tới Edge Device & tất cả UI</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════ BACKEND PROCESSING ROW ══════ -->
+  <div style="display:flex;justify-content:center;margin-top:32px;">
+    <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+      <div class="arrow-line" style="min-height:16px;"></div>
+      <div class="arrow-label label-http">HTTP POST</div>
+      <div class="arrow-line" style="min-height:8px;"></div>
+      <div class="arrow-head"></div>
+    </div>
+  </div>
+
+  <!-- ══════ BACKEND PROCESSING BLOCK ══════ -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div class="group-box group-web" style="width:780px;">
+      <span class="group-label">Backend – Node.js/Express (Port 5000)</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px;">
+
+        <div class="node node-backend" style="text-align:center;">
+          <span class="node-icon">📥</span>
+          <span class="node-title">POST /api/v1/inferences</span>
+          <span class="node-sub">Nhận { fruit_type, status, quality_score, confidence, snapshot_base64 }</span>
+        </div>
+
+        <div class="node node-db" style="text-align:center;">
+          <span class="node-icon">💾</span>
+          <span class="node-title">Decode & Lưu ảnh</span>
+          <span class="node-sub">Base64 → Buffer → JPEG file<br>→ /public/snapshots/</span>
+          <span class="node-sub" style="margin-top:4px;">INSERT INTO inferences (SQLite)</span>
+          <span class="node-tag">fruit_quality.db</span>
+        </div>
+
+        <div class="node node-backend" style="text-align:center;">
+          <span class="node-icon">📤</span>
+          <span class="node-title">API Endpoints</span>
+          <span class="node-sub">GET /stats · GET /inferences<br>GET /telemetry · GET /yield-trend<br>PATCH /inferences/:id/label</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;">
+    <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+      <div class="arrow-line" style="min-height:16px;"></div>
+      <div class="arrow-head"></div>
+    </div>
+  </div>
+
+  <!-- ══════ DASHBOARD DATA ══════ -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div class="group-box group-web" style="width:780px;border-color:#9333ea;">
+      <span class="group-label" style="background:#4c1d95;color:#e9d5ff;border-color:#9333ea;">Dashboard React – Hiển thị kết quả</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:8px;">
+
+        <div class="node node-ui" style="text-align:center;padding:10px;">
+          <span class="node-icon">📹</span>
+          <span class="node-title" style="font-size:12px;">Live Video</span>
+          <span class="node-sub">Stream từ Socket.IO</span>
+        </div>
+
+        <div class="node node-ui" style="text-align:center;padding:10px;">
+          <span class="node-icon">📋</span>
+          <span class="node-title" style="font-size:12px;">Lịch sử phát hiện</span>
+          <span class="node-sub">50 kết quả gần nhất · Gán nhãn người dùng</span>
+        </div>
+
+        <div class="node node-ui" style="text-align:center;padding:10px;">
+          <span class="node-icon">📈</span>
+          <span class="node-title" style="font-size:12px;">Thống kê sản xuất</span>
+          <span class="node-sub">Total · Yield Rate · Grade A/B/Rejected</span>
+        </div>
+
+        <div class="node node-ui" style="text-align:center;padding:10px;">
+          <span class="node-icon">⚡</span>
+          <span class="node-title" style="font-size:12px;">Telemetry thiết bị</span>
+          <span class="node-sub">FPS · Inference ms · Status</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;margin-top:4px;">
+    <div class="arrow" style="align-items:center;display:flex;flex-direction:column;">
+      <div class="arrow-line" style="min-height:16px;"></div>
+      <div class="arrow-head" style="border-top-color:#6b7280;"></div>
+    </div>
+  </div>
+
+  <!-- ══════ END ══════ -->
+  <div style="display:flex;justify-content:center;margin-top:4px;">
+    <div class="node node-start" style="width:220px;border-radius:999px;padding:10px 32px;text-align:center;border-color:#22c55e;">
+      <span class="node-icon">🔄</span>
+      <span class="node-title" style="color:#86efac;">Lặp lại vòng lặp chính</span>
+      <span class="node-sub" style="color:#6b7280;">Quay về bước 2 mỗi 2 giây</span>
+    </div>
+  </div>
+
+</div><!-- /diagram -->
+
+<!-- ─── DATA FLOW SUMMARY ─── -->
+<div style="max-width:900px;margin:64px auto 0;">
+  <h2 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:24px;color:#a78bfa;">
+    📊 Tóm tắt luồng dữ liệu
+  </h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+
+    <div class="group-box group-hw" style="border-radius:12px;">
+      <span class="group-label">Luồng 1 – Video Stream</span>
+      <div style="margin-top:16px;font-size:13px;line-height:2;color:var(--text-dim);">
+        📷 Camera USB<br>
+        → <span style="color:#bfdbfe;">CameraReader Thread</span> (liên tục)<br>
+        → <span style="color:#bae6fd;">StreamWorker</span> (resize + encode)<br>
+        → <span style="color:#67e8f9;">WebSocket ↑</span> video_frame_upstream<br>
+        → <span style="color:#99f6e4;">Backend</span> broadcast<br>
+        → <span style="color:#ddd6fe;">React Dashboard</span> live view
+      </div>
+    </div>
+
+    <div class="group-box group-edge" style="border-radius:12px;">
+      <span class="group-label">Luồng 2 – AI Inference</span>
+      <div style="margin-top:16px;font-size:13px;line-height:2;color:var(--text-dim);">
+        📸 Frame mỗi 2 giây<br>
+        → <span style="color:#e9d5ff;">InferenceWorker</span> encode JPEG<br>
+        → <span style="color:#fbbf24;">Azure Custom Vision</span> POST :8080<br>
+        → Parse predictions → filter ≥70%<br>
+        → <span style="color:#99f6e4;">POST /api/v1/inferences</span> + ảnh<br>
+        → <span style="color:#fdba74;">SQLite DB</span> lưu kết quả
+      </div>
+    </div>
+
+    <div class="group-box group-web" style="border-radius:12px;">
+      <span class="group-label">Luồng 3 – Điều khiển</span>
+      <div style="margin-top:16px;font-size:13px;line-height:2;color:var(--text-dim);">
+        🖱️ User bấm nút trên Dashboard<br>
+        → <span style="color:#ddd6fe;">Emit set_classification_state</span><br>
+        → <span style="color:#99f6e4;">Backend</span> cập nhật global state<br>
+        → <span style="color:#67e8f9;">Broadcast classification_state</span><br>
+        → <span style="color:#e9d5ff;">Edge Device</span> nhận is_classifying<br>
+        → Bật/Tắt inference loop
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>Fruit Quality Detection System · IoT in Factory · 2025</p>
+  <p style="margin-top:4px;">Edge Device: Qualcomm QCS6490 AI BOX · AI: Azure Custom Vision · Backend: Node.js/Express · Frontend: React + Vite</p>
+</footer>
+
+</body>
+</html>

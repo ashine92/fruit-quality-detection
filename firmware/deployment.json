@@ -3,47 +3,48 @@
     "modulesContent": {
       "$edgeAgent": {
         "properties.desired": {
-          "schemaVersion":"1.1",
+          "schemaVersion": "1.1",
           "runtime": {
-            "type":"docker",
+            "type": "docker",
             "settings": {
-              "minDockerVersion":"v1.25",
+              "minDockerVersion": "v1.25",
+              "loggingOptions": "",
               "registryCredentials": {
                 "ClassifierRegistry": {
-                  "username":"fruitqualitydetectoracr",
-                  "password":"YOUR_PASSWORD",
-                  "address":"fruitqualitydetectoracr.azurecr.io"
+                  "username": "fruitqualitydetectoracr",
+                  "password": "AJRj0736wSFE3pN05X8B4fkzUaouLelHi686jd94CO6VQ0P87Qj1JQQJ99CEACi0881Eqg7NAAACAZCRyRyQ",
+                  "address": "fruitqualitydetectoracr.azurecr.io"
                 }
               }
             }
           },
           "systemModules": {
             "edgeAgent": {
-              "type":"docker",
+              "type": "docker",
               "settings": {
-                "image":"mcr.microsoft.com/azureiotedge-agent:1.5",
-                "createOptions":"{}"
+                "image": "mcr.microsoft.com/azureiotedge-agent:1.5",
+                "createOptions": "{}"
               }
             },
             "edgeHub": {
-              "type":"docker",
-              "status":"running",
-              "restartPolicy":"always",
+              "type": "docker",
+              "status": "running",
+              "restartPolicy": "always",
               "settings": {
-                "image":"mcr.microsoft.com/azureiotedge-hub:1.5",
-                "createOptions":"{}"
+                "image": "mcr.microsoft.com/azureiotedge-hub:1.5",
+                "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
               }
             }
           },
           "modules": {
             "ImageClassifier": {
-              "version":"1.0",
-              "type":"docker",
-              "status":"running",
-              "restartPolicy":"always",
+              "version": "1.0",
+              "type": "docker",
+              "status": "running",
+              "restartPolicy": "always",
               "settings": {
-                "image":"fruitqualitydetectoracr.azurecr.io/classifier:v1",
-                "createOptions":"{\"HostConfig\":{\"PortBindings\":{\"80/tcp\":[{\"HostPort\":\"80\"}]}}}"
+                "image": "fruitqualitydetectoracr.azurecr.io/classifier:v1",
+                "createOptions": "{\"ExposedPorts\":{\"80/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"80/tcp\":[{\"HostPort\":\"80\"}]}}}"
               }
             }
           }
@@ -51,12 +52,12 @@
       },
       "$edgeHub": {
         "properties.desired": {
-          "schemaVersion":"1.1",
+          "schemaVersion": "1.1",
           "routes": {
-            "upstream":"FROM /messages/* INTO $upstream"
+            "upstream": "FROM /messages/* INTO $upstream"
           },
           "storeAndForwardConfiguration": {
-            "timeToLiveSecs":7200
+            "timeToLiveSecs": 7200
           }
         }
       }
