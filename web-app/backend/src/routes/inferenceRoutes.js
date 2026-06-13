@@ -479,16 +479,27 @@ router.post('/classify', async (req, res) => {
       return res.status(400).json({ error: 'Max 10 images per request' });
     }
 
-    const results = await Promise.all(images.map(async (img) => {
+    console.log(`\n[WEB_CLASSIFY] 📥 Nhận yêu cầu phân loại ${images.length} bức ảnh từ Dashboard.`);
+    const results = [];
+
+    // Chuyển từ Promise.all (chạy song song gây nghẽn) sang vòng lặp for...of (chạy tuần tự)
+    for (const img of images) {
       const { name, dataUrl } = img;
 
       // ── Extract base64 bytes ──
       const matches = dataUrl.match(/^data:image\/([A-Za-z-+/]+);base64,(.+)$/);
-      if (!matches) return { name, error: 'Invalid image format' };
+      if (!matches) {
+        console.error(`[WEB_CLASSIFY] ❌ "${name}" sai định dạng ảnh.`);
+        results.push({ name, error: 'Invalid image format' });
+        continue;
+      }
 
       const ext      = matches[1];
       const b64data  = matches[2];
       const buffer   = Buffer.from(b64data, 'base64');
+      
+      const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
+      console.log(`[WEB_CLASSIFY] 🔍 Đang bóc tách ảnh: "${name}" (Size: ~${sizeMB} MB)...`);
 
       // ── Forward to AI model ──
       let className    = 'Unknown';
@@ -497,7 +508,7 @@ router.post('/classify', async (req, res) => {
       let inferenceMs = 0;
 
       try {
-        // Build multipart form-data manually using FormData-compatible approach
+        console.log(`[WEB_CLASSIFY] 🚀 Gửi "${name}" tới AI Model (${AI_MODEL_URL})...`);
         const FormData = (await import('form-data')).default;
         const { default: fetch } = await import('node-fetch');
 
@@ -508,7 +519,7 @@ router.post('/classify', async (req, res) => {
         const aiRes = await fetch(AI_MODEL_URL, { method: 'POST', body: form, headers: form.getHeaders(), timeout: 8000 });
         inferenceMs = Date.now() - t0;
 
-        if (!aiRes.ok) throw new Error(`AI model HTTP ${aiRes.status}`);
+        if (!aiRes.ok) throw new Error(`HTTP ${aiRes.status}`);
 
         const aiData = await aiRes.json();
         const predictions = aiData.predictions || [];
@@ -522,10 +533,14 @@ router.post('/classify', async (req, res) => {
           confidence = parseFloat((best.probability * 100).toFixed(2));
           className  = best.probability >= CONFIDENCE_THRESHOLD ? best.tagName : 'Unknown';
         }
+
+        console.log(`[WEB_CLASSIFY] ✅ Nhận kết quả "${name}" -> ${className} (${confidence}%) | Tốn ${inferenceMs}ms`);
+
       } catch (aiErr) {
-        console.error(`[classify] AI error for "${name}":`, aiErr.message);
-        // Return partial result with error flag
-        return { name, className: 'Error', confidence: 0, allPredictions: [], error: 'AI model unreachable' };
+        // Ghi lại toàn bộ chi tiết lỗi thay vì chỉ ghi message
+        console.error(`[WEB_CLASSIFY] ❌ LỖI cho "${name}":`, aiErr.stack || aiErr.message);
+        results.push({ name, className: 'Error', confidence: 0, allPredictions: [], error: 'AI model unreachable' });
+        continue;
       }
 
       // ── Save snapshot to disk ──
@@ -537,7 +552,7 @@ router.post('/classify', async (req, res) => {
         fs.writeFileSync(filepath, buffer);
         snapshotUrl = `/public/snapshots/${filename}`;
       } catch (fsErr) {
-        console.error('[classify] Snapshot save error:', fsErr.message);
+        console.error('[WEB_CLASSIFY] ⚠️ Lỗi lưu ảnh:', fsErr.message);
       }
 
       // ── Persist to DB ──
@@ -549,12 +564,13 @@ router.post('/classify', async (req, res) => {
         `).run('BANANA', className, confidence, confidence, inferenceMs, snapshotUrl);
         savedId = info.lastInsertRowid;
       } catch (dbErr) {
-        console.error('[classify] DB save error:', dbErr.message);
+        console.error('[WEB_CLASSIFY] ⚠️ Lỗi lưu Database:', dbErr.message);
       }
 
-      return { name, className, confidence, allPredictions, snapshotUrl, savedId, inferenceMs };
-    }));
+      results.push({ name, className, confidence, allPredictions, snapshotUrl, savedId, inferenceMs });
+    }
 
+    console.log(`[WEB_CLASSIFY] 🎉 Hoàn tất phân loại ${images.length} ảnh.\n`);
     res.json({ results });
   } catch (err) {
     console.error('POST /classify error:', err);

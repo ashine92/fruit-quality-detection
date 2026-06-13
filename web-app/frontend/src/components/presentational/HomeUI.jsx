@@ -327,10 +327,10 @@ export default function HomeUI() {
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
           className="grid grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          <TeamMember name="Nguyễn Ngọc Hồng Ánh" role="Researcher & Developer" />
-          <TeamMember name="Nguyễn Thiện Hưng" role="Researcher & Developer" />
-          <TeamMember name="Phan Ngọc Ngân" role="Researcher & Developer" />
-          <TeamMember name="Võ Thị Kim Thoa" role="Researcher & Developer" />
+          <TeamMember name="Nguyễn Ngọc Hồng Ánh" role="Edge AI & Firmware Engineer" />
+          <TeamMember name="Nguyễn Thiện Hưng" role="Backend Developer" />
+          <TeamMember name="Phan Ngọc Ngân" role="Frontend Developer" />
+          <TeamMember name="Võ Thị Kim Thoa" role="Hardware Engineer" />
         </motion.div>
       </section>
 

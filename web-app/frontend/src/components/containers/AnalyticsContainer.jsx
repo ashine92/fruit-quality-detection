@@ -40,7 +40,6 @@ export default function AnalyticsContainer() {
     <AnalyticsUI
       trendData={trendData}
       logs={logs}
-      onRefresh={() => refetch()}
       onLabelAssign={(id, label) => labelMutation.mutate({ id, label })}
       onLabelRemove={(id) => removeLabelMutation.mutate({ id })}
     />

@@ -9,20 +9,9 @@ import {
 } from 'lucide-react';
 import { edgeApi } from '../../services/edgeApi';
 
+import { CLASS_COLORS, CLASS_ICONS, normalizeLabel } from '../../utils/theme';
+
 // ── Constants ──────────────────────────────────────
-const CLASS_COLORS = {
-  Ripe:     { bg: '#22c55e', light: '#f0fdf4', text: '#166534' },
-  Unripe:   { bg: '#eab308', light: '#fefce8', text: '#854d0e' },
-  Overripe: { bg: '#f97316', light: '#fff7ed', text: '#9a3412' },
-  Rotten:   { bg: '#ef4444', light: '#fef2f2', text: '#991b1b' },
-  Unknown:  { bg: '#9ca3af', light: '#f9fafb', text: '#374151' },
-  Error:    { bg: '#6366f1', light: '#eef2ff', text: '#3730a3' },
-};
-const CLASS_ICONS = {
-  Ripe: CheckCircle2, Unripe: AlertTriangle,
-  Overripe: AlertTriangle, Rotten: XCircle,
-  Unknown: HelpCircle, Error: XCircle,
-};
 const MAX_FILES = 10;
 const MAX_SIZE_MB = 8;
 
@@ -45,15 +34,17 @@ function formatBytes(bytes) {
 // ── Result Card ────────────────────────────────────
 function ResultCard({ result, previewUrl, index }) {
   const [expanded, setExpanded] = useState(false);
-  const c = CLASS_COLORS[result.className] || CLASS_COLORS.Unknown;
-  const Icon = CLASS_ICONS[result.className] || HelpCircle;
+  const normalizedClass = normalizeLabel(result.className);
+  const colorHex = CLASS_COLORS[normalizedClass] || CLASS_COLORS.Unknown;
+  const Icon = CLASS_ICONS[normalizedClass] || CLASS_ICONS.Unknown;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      className="glass-card rounded-2xl overflow-hidden"
+      className="glass-card rounded-2xl overflow-hidden border-2"
+      style={{ backgroundColor: colorHex + '15', borderColor: colorHex + '50' }}
     >
       {/* Image + badge */}
       <div className="relative h-40 bg-black flex items-center justify-center overflow-hidden">
@@ -64,10 +55,10 @@ function ResultCard({ result, previewUrl, index }) {
         )}
         <div
           className="absolute top-2 right-2 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-lg"
-          style={{ backgroundColor: c.bg }}
+          style={{ backgroundColor: colorHex }}
         >
           <Icon className="w-3 h-3" />
-          {result.className}
+          {normalizedClass}
         </div>
         {result.error && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -84,12 +75,12 @@ function ResultCard({ result, previewUrl, index }) {
         <div className="space-y-1 mb-3">
           <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
             <span>Confidence</span>
-            <span style={{ color: c.bg }}>{result.confidence}%</span>
+            <span style={{ color: colorHex }}>{result.confidence}%</span>
           </div>
-          <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+          <div className="h-2 bg-surface-container rounded-full overflow-hidden border" style={{ borderColor: colorHex + '30' }}>
             <motion.div
               className="h-full rounded-full"
-              style={{ backgroundColor: c.bg }}
+              style={{ backgroundColor: colorHex }}
               initial={{ width: 0 }}
               animate={{ width: `${result.confidence}%` }}
               transition={{ duration: 0.8, ease: 'easeOut', delay: index * 0.06 + 0.2 }}
@@ -119,15 +110,16 @@ function ResultCard({ result, previewUrl, index }) {
             >
               <div className="space-y-1.5 mt-2">
                 {result.allPredictions.map((p) => {
-                  const pc = CLASS_COLORS[p.label] || CLASS_COLORS.Unknown;
+                  const pNorm = normalizeLabel(p.label);
+                  const pc = CLASS_COLORS[pNorm] || CLASS_COLORS.Unknown;
                   return (
                     <div key={p.label} className="space-y-0.5">
                       <div className="flex justify-between text-[9px] font-bold text-on-surface-variant uppercase">
-                        <span>{p.label}</span>
+                        <span>{pNorm}</span>
                         <span>{p.probability}%</span>
                       </div>
                       <div className="h-1 bg-surface-container rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${p.probability}%`, backgroundColor: pc.bg }} />
+                        <div className="h-full rounded-full" style={{ width: `${p.probability}%`, backgroundColor: pc }} />
                       </div>
                     </div>
                   );
@@ -372,11 +364,11 @@ export default function ClassifyUI() {
             </div>
             <div className="flex flex-wrap gap-2">
               {['Ripe','Unripe','Overripe','Rotten','Unknown'].map(cls => {
-                const count = results.filter(r => r.className === cls).length;
+                const count = results.filter(r => normalizeLabel(r.className) === cls).length;
                 if (!count) return null;
                 const c = CLASS_COLORS[cls];
                 return (
-                  <span key={cls} className="px-2.5 py-1 rounded-full text-[10px] font-black text-white" style={{ backgroundColor: c.bg }}>
+                  <span key={cls} className="px-2.5 py-1 rounded-full text-[10px] font-black text-white" style={{ backgroundColor: c }}>
                     {cls}: {count}
                   </span>
                 );

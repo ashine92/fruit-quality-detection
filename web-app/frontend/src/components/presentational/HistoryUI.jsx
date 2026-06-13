@@ -5,14 +5,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Search, X, Camera, Download, ChevronLeft, ChevronRight, Undo2, Trash2, CheckSquare, Square, Sparkles, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-const CLASS_COLORS = {
-  Ripe:     '#22c55e',
-  Unripe:   '#eab308',
-  Overripe: '#f97316',
-  Rotten:   '#ef4444',
-  Unknown:  '#9ca3af',
-};
+import { CLASS_COLORS, normalizeLabel } from '../../utils/theme';
 const CLASS_LABELS = ['All', 'Ripe', 'Unripe', 'Overripe', 'Rotten', 'Unknown'];
 const PAGE_SIZE = 12;
 
@@ -24,8 +17,8 @@ function SkeletonCard() {
 /* ── Snapshot Card ── */
 function SnapshotCard({ log, onClick, isSelected, onToggleSelect, selectMode }) {
   // Prefer human label when corrected
-  const displayClass = log.isCorrected && log.humanLabel ? log.humanLabel : log.className;
-  const color = CLASS_COLORS[displayClass] || '#9ca3af';
+  const displayClass = log.isCorrected && log.humanLabel ? normalizeLabel(log.humanLabel) : normalizeLabel(log.className);
+  const color = CLASS_COLORS[displayClass] || CLASS_COLORS.Unknown;
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -155,10 +148,10 @@ export default function HistoryUI({
     if (!logs) return [];
     return logs.filter(l => {
       // Use human label if corrected, else AI class
-      const effectiveClass = l.isCorrected && l.humanLabel ? l.humanLabel : l.className;
+      const effectiveClass = l.isCorrected && l.humanLabel ? normalizeLabel(l.humanLabel) : normalizeLabel(l.className);
       const matchSearch = !searchQuery ||
         l.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        effectiveClass?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        effectiveClass.toLowerCase().includes(searchQuery.toLowerCase()) ||
         l.timestamp?.includes(searchQuery);
       const matchClass = filterClass === 'All' || effectiveClass === filterClass;
       return matchSearch && matchClass;
@@ -203,7 +196,7 @@ export default function HistoryUI({
   const handleExportCSV = () => {
     if (!filtered.length) return;
     const headers = ['ID', 'Timestamp', 'Class', 'Confidence', 'Human Label'];
-    const rows = filtered.map(l => [l.id, l.timestamp, l.className, l.confidence + '%', l.humanLabel || '']);
+    const rows = filtered.map(l => [l.id, l.timestamp, normalizeLabel(l.className), l.confidence + '%', l.humanLabel || '']);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
@@ -427,7 +420,7 @@ export default function HistoryUI({
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-surface-container-low p-3 rounded-xl border border-outline-variant text-center">
                     <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Class</p>
-                    <p className="font-black text-sm" style={{ color: CLASS_COLORS[selectedLog.className] }}>{selectedLog.className}</p>
+                    <p className="font-black text-sm" style={{ color: CLASS_COLORS[normalizeLabel(selectedLog.className)] }}>{normalizeLabel(selectedLog.className)}</p>
                   </div>
                   <div className="bg-surface-container-low p-3 rounded-xl border border-outline-variant text-center">
                     <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Confidence</p>

@@ -7,16 +7,9 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { RefreshCw, X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle, Undo2, ChevronDown, Check } from 'lucide-react';
+import { X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle, Undo2, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-const CLASS_COLORS = {
-  Ripe:     '#22c55e',
-  Unripe:   '#eab308',
-  Overripe: '#f97316',
-  Rotten:   '#ef4444',
-  Unknown:  '#9ca3af',
-};
+import { CLASS_COLORS, normalizeLabel } from '../../utils/theme';
 const CLASS_LABELS = ['Ripe', 'Unripe', 'Overripe', 'Rotten', 'Unknown'];
 
 /* ── Skeleton ── */
@@ -63,7 +56,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 /* ── Main Component ── */
-export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign, onLabelRemove }) {
+export default function AnalyticsUI({ trendData, logs, onLabelAssign, onLabelRemove }) {
   const [selectedLog, setSelectedLog] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('All');
@@ -104,9 +97,10 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
   const filteredLogs = useMemo(() => {
     if (!logs) return [];
     return logs.filter(l => {
+      const normClass = normalizeLabel(l.className);
       const matchSearch = l.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          l.className?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchClass = filterClass === 'All' || l.className === filterClass;
+                          normClass.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchClass = filterClass === 'All' || normClass === filterClass;
       return matchSearch && matchClass;
     });
   }, [logs, searchQuery, filterClass]);
@@ -115,8 +109,8 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
   const kpiData = useMemo(() => {
     if (!logs?.length) return { total: 0, ripeRate: 0, rejectedRate: 0, avgConf: 0 };
     const total = logs.length;
-    const ripe = logs.filter(l => l.className === 'Ripe' || l.className === 'Unripe').length;
-    const rejected = logs.filter(l => l.className === 'Overripe' || l.className === 'Rotten').length;
+    const ripe = logs.filter(l => { const n = normalizeLabel(l.className); return n === 'Ripe' || n === 'Unripe'; }).length;
+    const rejected = logs.filter(l => { const n = normalizeLabel(l.className); return n === 'Overripe' || n === 'Rotten'; }).length;
     const avgConf = (logs.reduce((s, l) => s + parseFloat(l.confidence || 0), 0) / total).toFixed(1);
     return {
       total,
@@ -131,7 +125,10 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
     if (!logs?.length) return CLASS_LABELS.map(l => ({ name: l, value: 0, color: CLASS_COLORS[l] }));
     const counts = {};
     CLASS_LABELS.forEach(l => counts[l] = 0);
-    logs.forEach(l => { if (counts[l.className] !== undefined) counts[l.className]++; });
+    logs.forEach(l => {
+      const n = normalizeLabel(l.className);
+      if (counts[n] !== undefined) counts[n]++;
+    });
     return CLASS_LABELS.map(name => ({ name, value: counts[name], color: CLASS_COLORS[name] }));
   }, [logs]);
 
@@ -150,15 +147,9 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
         <div className="flex gap-2">
           <button
             onClick={handleExportCSV}
-            className="flex items-center px-4 py-2 rounded-xl glass-card text-[11px] font-bold uppercase tracking-wider text-on-surface hover:bg-surface-container transition-colors"
-          >
-            <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
-          </button>
-          <button
-            onClick={onRefresh}
             className="flex items-center px-4 py-2 rounded-xl bg-gradient-primary text-white text-[11px] font-bold uppercase tracking-wider shadow-md glow-green hover:opacity-90 transition-opacity"
           >
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
+            <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
           </button>
         </div>
       </div>
@@ -333,7 +324,8 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
             </thead>
             <tbody className="divide-y divide-outline-variant">
               {filteredLogs.map((log) => {
-                const classColor = CLASS_COLORS[log.className] || '#9ca3af';
+                const normClass = normalizeLabel(log.className);
+                const classColor = CLASS_COLORS[normClass] || '#9ca3af';
                 return (
                   <tr
                     key={log.id}
@@ -347,7 +339,7 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
                         className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
                         style={{ backgroundColor: classColor }}
                       >
-                        {log.className}
+                        {normClass}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -443,8 +435,8 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
               <div className="w-full grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
                   <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">AI Classification</p>
-                  <p className="font-black text-lg" style={{ color: CLASS_COLORS[selectedLog.className] || '#9ca3af' }}>
-                    {selectedLog.className}
+                  <p className="font-black text-lg" style={{ color: CLASS_COLORS[normalizeLabel(selectedLog.className)] || '#9ca3af' }}>
+                    {normalizeLabel(selectedLog.className)}
                   </p>
                 </div>
                 <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
