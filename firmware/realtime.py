@@ -20,12 +20,12 @@ if sys.platform == 'win32':
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-# BACKEND_API_URL    = "http://192.168.0.108:5000/api/v1/inferences"
-# BACKEND_SOCKET_URL = "http://192.168.0.108:5000"
+BACKEND_API_URL    = "http://10.42.0.1:5000/api/v1/inferences"
+BACKEND_SOCKET_URL = "http://10.42.0.1:5000"
 
 # Đổi thành Localhost nếu chạy trên laptop
-BACKEND_API_URL    = "http://localhost:5000/api/v1/inferences"
-BACKEND_SOCKET_URL = "http://localhost:5000"
+# BACKEND_API_URL    = "http://localhost:5000/api/v1/inferences"
+# BACKEND_SOCKET_URL = "http://localhost:5000"
 
 CAMERA_WIDTH  = 640
 CAMERA_HEIGHT = 480
@@ -35,15 +35,18 @@ STREAM_QUALITY = 60
 STREAM_SCALE   = 0.75
 # ───── AI INFERENCE CONFIG ─────
 # --- MÔI TRƯỜNG TEST TRÊN LAPTOP ---
-MODEL_URL          = "http://127.0.0.1:5001/image"                              # Dùng với mock_ai.py
-SNAPSHOT_DIR       = r"d:\Study\DH\IoT in Factory\project\web-app\backend\public\snapshots"
+# MODEL_URL = "http://127.0.0.1:5001/image"                                     # Dùng với mock_ai.py
 
 # --- MÔI TRƯỜNG CHẠY THẬT TRÊN THIẾT BỊ EDGE (QCS6490) ---
-# MODEL_URL          = "http://127.0.0.1/image"                                 # Custom Vision Docker endpoint
-# SNAPSHOT_DIR       = "/mnt/web_snapshots"                                     # SMB mount of Windows web-app path
+MODEL_URL = "http://localhost:8080/image"                                            # Custom Vision Docker endpoint
 
-INFERENCE_INTERVAL = 2.0                        # Classify every 2 seconds
-CONFIDENCE_THRESHOLD = 0.70                     # Under 70% is Unknown
+# ⚠️  SNAPSHOT_DIR không còn dùng nữa:
+# Ảnh snapshot được lưu bởi backend server (Node.js) tại:
+#   web-app/backend/public/snapshots/
+# Edge device chỉ cần gửi base64 qua BACKEND_API_URL là đủ.
+
+INFERENCE_INTERVAL = 5.0                        # Classify every 2 seconds
+CONFIDENCE_THRESHOLD = 0.50                     # Under 70% is Unknown
 
 # Support laptop camera via command line arg or env var
 USE_LAPTOP_CAMERA = "--laptop" in sys.argv or os.environ.get("USE_LAPTOP", "0") == "1"
@@ -448,11 +451,10 @@ class InferenceWorker(threading.Thread):
                 # In kết quả
                 print(f"🎯 {tag_name}: {probability:.1%}")
 
-            # Lưu ảnh vào ổ cứng QCS6490 (vẫn giữ để backup local)
-            self._save_snapshot(frame, tag_name, probability)
-
-            # Bắn thẳng data + base64 image qua HTTP API để backend tự save
+            # Gửi kết quả + base64 image về backend → backend tự lưu vào public/snapshots/
             self._emit_result(tag_name, probability, frame)
+
+            # _save_snapshot đã bị tắt: backend server (Node.js) chịu trách nhiệm lưu ảnh
 
         except Exception as e:
             print(f"⚠️  Error parsing result: {e}")
@@ -667,7 +669,5 @@ while True:
             # Get full-size frame for AI (not resized)
             full_frame = cam.get_frame()
             if full_frame is not None:
-                inferrer.submit(full_frame)  # Non-blocking
-        last_infer = nowe is not None:
                 inferrer.submit(full_frame)  # Non-blocking
         last_infer = now
