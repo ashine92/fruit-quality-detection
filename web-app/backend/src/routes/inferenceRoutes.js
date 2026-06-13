@@ -19,9 +19,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // AI Model endpoint — must match realtime.py MODEL_URL
-const AI_MODEL_URL = process.env.AI_MODEL_URL || 'http://127.0.0.1:5001/image';
+const AI_MODEL_URL = process.env.AI_MODEL_URL || 'http://10.42.0.10:8080/image';
 const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD || '0.70');
-
 const router = Router();
 
 // ─────────────────────────────────────────────

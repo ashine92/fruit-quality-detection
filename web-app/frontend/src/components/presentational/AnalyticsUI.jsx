@@ -2,21 +2,22 @@
  * AnalyticsUI — Presentational Component
  * KPI cards, live charts, search/filter, CSV export, skeleton loading
  */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { RefreshCw, X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle, Undo2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { RefreshCw, X, Download, Search, Filter, TrendingUp, TrendingDown, Award, AlertTriangle, Undo2, ChevronDown, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const CLASS_COLORS = {
   Ripe:     '#22c55e',
   Unripe:   '#eab308',
   Overripe: '#f97316',
   Rotten:   '#ef4444',
+  Unknown:  '#9ca3af',
 };
-const CLASS_LABELS = ['Ripe', 'Unripe', 'Overripe', 'Rotten'];
+const CLASS_LABELS = ['Ripe', 'Unripe', 'Overripe', 'Rotten', 'Unknown'];
 
 /* ── Skeleton ── */
 function Skeleton({ className = '' }) {
@@ -66,6 +67,19 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
   const [selectedLog, setSelectedLog] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('All');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Sync selectedLog with live data after label mutation refetch
   useEffect(() => {
@@ -247,16 +261,60 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
               />
             </div>
             {/* Class filter */}
-            <div className="relative">
-              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant" />
-              <select
-                value={filterClass}
-                onChange={e => setFilterClass(e.target.value)}
-                className="pl-8 pr-3 py-2 rounded-xl bg-surface-container border border-outline-variant text-[11px] font-bold text-on-surface outline-none focus:border-primary appearance-none cursor-pointer"
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className={`flex items-center justify-between pl-8 pr-3 py-2 rounded-xl border text-[11px] font-bold text-on-surface outline-none transition-colors w-32 ${
+                  isDropdownOpen ? 'bg-surface border-primary shadow-sm' : 'bg-surface-container border-outline-variant hover:border-primary/50'
+                }`}
               >
-                <option>All</option>
-                {CLASS_LABELS.map(l => <option key={l}>{l}</option>)}
-              </select>
+                <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant" />
+                <span className="truncate pr-2">{filterClass}</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-on-surface-variant transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-primary' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute right-0 mt-2 w-40 glass-card bg-surface/95 backdrop-blur-xl border border-outline-variant rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
+                  >
+                    <button
+                      onClick={() => { setFilterClass('All'); setIsDropdownOpen(false); }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[11px] font-bold transition-colors ${
+                        filterClass === 'All' ? 'bg-primary/10 text-primary' : 'text-on-surface hover:bg-surface-container'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-2 h-2 rounded-full bg-outline-variant" />
+                        All
+                      </div>
+                      {filterClass === 'All' && <Check className="w-3.5 h-3.5 text-primary" />}
+                    </button>
+                    
+                    <div className="h-px w-full bg-outline-variant/30 my-1" />
+                    
+                    {CLASS_LABELS.map(l => (
+                      <button
+                        key={l}
+                        onClick={() => { setFilterClass(l); setIsDropdownOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 text-[11px] font-bold transition-colors ${
+                          filterClass === l ? 'bg-primary/10 text-primary' : 'text-on-surface hover:bg-surface-container'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CLASS_COLORS[l] }} />
+                          {l}
+                        </div>
+                        {filterClass === l && <Check className="w-3.5 h-3.5 text-primary" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -408,7 +466,7 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
                 {selectedLog.isCorrected ? (
                   <div className="space-y-2">
                     <div className="bg-primary/10 text-primary p-3 rounded-xl text-center font-bold text-sm border border-primary/20">
-                      ✓ Đã gán nhãn: <strong>{selectedLog.humanLabel}</strong>
+                      ✓ Label assigned: <strong>{selectedLog.humanLabel}</strong>
                     </div>
                     <button
                       onClick={() => {
@@ -419,13 +477,13 @@ export default function AnalyticsUI({ trendData, logs, onRefresh, onLabelAssign,
                       className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-outline-variant text-xs font-bold text-on-surface-variant hover:bg-surface-container hover:text-red-500 hover:border-red-300 transition-all"
                     >
                       <Undo2 className="w-3.5 h-3.5" />
-                      Hoàn tác nhãn
+                      Revert label
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-[10px] text-on-surface-variant text-center mb-2">Chọn nhãn đúng cho ảnh này:</p>
-                    <div className="grid grid-cols-4 gap-2">
+                    <p className="text-[10px] text-on-surface-variant text-center mb-2">Select the correct classification:</p>
+                    <div className="grid grid-cols-5 gap-2">
                       {CLASS_LABELS.map(label => (
                         <button
                           key={label}

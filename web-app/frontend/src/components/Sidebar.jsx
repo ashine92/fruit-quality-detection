@@ -18,7 +18,6 @@ export default function Sidebar() {
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'classify',  label: 'Classify',  icon: ScanLine },
     { id: 'history',   label: 'History',   icon: History },
-    { id: 'about',     label: 'About Us',  icon: Info },
   ];
 
   return (

@@ -25,5 +25,5 @@ def predict_image():
     })
 
 if __name__ == '__main__':
-    print("🤖 Mock AI Model is running on http://127.0.0.1:5001/image")
+    print("Mock AI Model is running on http://127.0.0.1:5001/image")
     app.run(host='0.0.0.0', port=5001)

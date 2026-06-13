@@ -5,7 +5,6 @@ import AnalyticsContainer from './components/containers/AnalyticsContainer';
 import HistoryContainer from './components/containers/HistoryContainer';
 import HomeUI from './components/presentational/HomeUI';
 import ClassifyUI from './components/presentational/ClassifyUI';
-import AboutUsUI from './components/presentational/AboutUsUI';
 import { StreamProvider } from './context/StreamContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUIStore } from './store/uiStore';
@@ -32,7 +31,6 @@ export default function App() {
       case 'analytics':   return <AnalyticsContainer />;
       case 'history':     return <HistoryContainer />;
       case 'classify':    return <ClassifyUI />;
-      case 'about':       return <AboutUsUI />;
       default:            return <HomeUI />;
     }
   };

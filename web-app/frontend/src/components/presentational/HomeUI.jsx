@@ -3,7 +3,9 @@ import { useUIStore } from '../../store/uiStore';
 import { 
   ArrowRight, Cpu, Wifi, Camera, BarChart3, Leaf, 
   Zap, Shield, Globe, Play, Server, Monitor,
-  Database, Code2, CheckCircle2, AlertTriangle, Info, Layers
+  Database, Code2, CheckCircle2, AlertTriangle, Info, Layers,
+  ShieldCheck, Users, Target, TrendingUp, Activity,
+  Factory, Eye, ScanLine, Award, Box, Microscope
 } from 'lucide-react';
 
 /* ── Animation Variants ── */
@@ -30,16 +32,27 @@ function FadeUp({ children, delay = 0 }) {
   );
 }
 
-/* ── Helpers from Old AboutUI & New UI ── */
-function FeatureCard({ icon: Icon, title, desc, color }) {
+/* ── Helpers from AboutUsUI ── */
+function SectionTitle({ icon: Icon, title, sub }) {
   return (
-    <motion.div variants={fadeInUp} className="glass-card rounded-3xl p-8 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
-      <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
-        style={{ background: `radial-gradient(circle at 50% 0%, ${color}, transparent 70%)` }}
-      />
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 relative z-10" style={{ backgroundColor: color + '20' }}>
-        <Icon className="w-7 h-7" style={{ color }} />
+    <div className="flex items-center flex-col text-center mb-12">
+      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+        <Icon className="w-6 h-6 text-primary" />
+      </div>
+      <h2 className="text-3xl lg:text-4xl font-black text-on-surface tracking-tight">{title}</h2>
+      {sub && <p className="text-on-surface-variant mt-2 max-w-2xl mx-auto">{sub}</p>}
+    </div>
+  );
+}
+
+function ChallengeCard({ icon: Icon, title, desc, color }) {
+  return (
+    <motion.div variants={fadeInUp} className="glass-card rounded-3xl p-8 border border-outline-variant hover:border-outline transition-colors relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+        <Icon className="w-24 h-24" style={{ color }} />
+      </div>
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 relative z-10" style={{ backgroundColor: color + '20' }}>
+        <Icon className="w-6 h-6" style={{ color }} />
       </div>
       <h3 className="text-xl font-black text-on-surface mb-3 relative z-10">{title}</h3>
       <p className="text-sm text-on-surface-variant leading-relaxed relative z-10">{desc}</p>
@@ -47,104 +60,26 @@ function FeatureCard({ icon: Icon, title, desc, color }) {
   );
 }
 
-function StepItem({ num, title, desc }) {
+function TechPill({ icon: Icon, label }) {
   return (
-    <motion.div variants={fadeInUp} className="flex gap-5 relative">
-      <div className="w-12 h-12 rounded-full bg-surface-container border-2 border-primary/30 flex items-center justify-center shrink-0 shadow-lg glow-green z-10">
-        <span className="text-primary font-black">{num}</span>
+    <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-outline-variant bg-surface-container-low">
+      <Icon className="w-4 h-4 text-primary" />
+      <span className="text-xs font-bold text-on-surface uppercase tracking-wider">{label}</span>
+    </div>
+  );
+}
+
+function TeamMember({ name, role }) {
+  return (
+    <motion.div variants={fadeInUp} className="flex flex-col items-center text-center p-6 glass-card rounded-3xl hover:-translate-y-2 transition-transform duration-300">
+      <div className="w-20 h-20 rounded-full bg-gradient-primary p-[3px] mb-4 shadow-lg glow-green">
+        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
+          <Users className="w-8 h-8 text-on-surface-variant/50" />
+        </div>
       </div>
-      <div className="pb-8">
-        <h4 className="text-lg font-black text-on-surface mb-2">{title}</h4>
-        <p className="text-sm text-on-surface-variant leading-relaxed">{desc}</p>
-      </div>
+      <h4 className="text-lg font-black text-on-surface">{name}</h4>
+      <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">{role}</p>
     </motion.div>
-  );
-}
-
-function SectionTitle({ icon: Icon, title, sub }) {
-  return (
-    <div className="flex items-start gap-3 mb-6">
-      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-        <Icon className="w-5 h-5 text-primary" />
-      </div>
-      <div>
-        <h2 className="text-headline-lg text-on-surface">{title}</h2>
-        {sub && <p className="text-sm text-on-surface-variant mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function Badge({ label, color = 'green' }) {
-  const colors = {
-    green:  'bg-green-100  text-green-700  dark:bg-green-900/30  dark:text-green-400',
-    amber:  'bg-amber-100  text-amber-700  dark:bg-amber-900/30  dark:text-amber-400',
-    blue:   'bg-blue-100   text-blue-700   dark:bg-blue-900/30   dark:text-blue-400',
-    purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    red:    'bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-400',
-  };
-  return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${colors[color]}`}>
-      {label}
-    </span>
-  );
-}
-
-function TechChip({ name, role, icon: Icon, color }) {
-  return (
-    <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + '18' }}>
-        <Icon className="w-4.5 h-4.5" style={{ color }} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-black text-on-surface leading-tight">{name}</p>
-        <p className="text-[10px] text-on-surface-variant font-medium mt-0.5 truncate">{role}</p>
-      </div>
-    </div>
-  );
-}
-
-function ArchNode({ icon: Icon, label, sub, color, delay }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay, duration: 0.4 }}
-      className="flex flex-col items-center gap-2"
-    >
-      <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-        style={{ backgroundColor: color + '20', border: `2px solid ${color}44` }}
-      >
-        <Icon className="w-7 h-7" style={{ color }} />
-      </div>
-      <div className="text-center">
-        <p className="text-xs font-black text-on-surface">{label}</p>
-        <p className="text-[9px] text-on-surface-variant font-medium">{sub}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-function Arrow() {
-  return (
-    <div className="flex items-center self-start mt-5">
-      <div className="h-0.5 w-8 bg-outline-variant" />
-      <ArrowRight className="w-3.5 h-3.5 text-on-surface-variant -ml-1" />
-    </div>
-  );
-}
-
-function LabelItem({ color, label, desc }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-3.5 h-3.5 rounded-full mt-1 shrink-0" style={{ backgroundColor: color }} />
-      <div>
-        <p className="text-sm font-black text-on-surface">{label}</p>
-        <p className="text-xs text-on-surface-variant font-medium">{desc}</p>
-      </div>
-    </div>
   );
 }
 
@@ -222,228 +157,184 @@ export default function HomeUI() {
         </motion.div>
       </section>
 
-      {/* ── Features Grid (New UI) ── */}
-      <section className="py-24 relative">
-        <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
-          variants={staggerContainer}
-          className="text-center mb-16 space-y-4"
-        >
-          <motion.h2 variants={fadeInUp} className="text-3xl lg:text-4xl font-black text-on-surface">Công Nghệ Đột Phá</motion.h2>
-          <motion.p variants={fadeInUp} className="text-on-surface-variant max-w-2xl mx-auto">Kiến trúc phần mềm tối ưu cho tốc độ và độ tin cậy trong môi trường công nghiệp khắc nghiệt.</motion.p>
-        </motion.div>
+      {/* ── 1. Hero Section ── */}
+      <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 flex flex-col items-center text-center min-h-[60vh] justify-center">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-primary/10 rounded-[100%] blur-[120px] pointer-events-none" />
+        
+        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="relative z-10 space-y-6 max-w-4xl px-4">
+          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass-card border border-primary/30 bg-primary/10 mb-4">
+            <Leaf className="w-4 h-4 text-primary" />
+            <span className="text-xs font-black uppercase tracking-widest text-primary">About Our Project</span>
+          </motion.div>
 
+          <motion.h1 variants={fadeInUp} className="text-[2.5rem] md:text-[3.5rem] lg:text-[4rem] leading-[1.1] font-black text-on-surface tracking-tight">
+            <span className="whitespace-nowrap">Reshaping Quality Control</span> <br />
+            <span className="whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">
+              with Artificial Intelligence
+            </span>
+          </motion.h1>
+
+          <motion.p variants={fadeInUp} className="text-lg lg:text-xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed pt-4">
+            The AgriVision Edge system provides an automated fruit sorting solution that combines the speed of machinery with the accuracy of computer vision to completely replace inefficient manual inspection methods.
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* ── 2. Industry Challenges ── */}
+      <section className="py-20 relative border-t border-outline-variant/30">
+        <SectionTitle 
+          icon={Factory} 
+          title="Industry Challenges" 
+          sub="Addressing the ongoing issues in traditional agricultural sorting processes." 
+        />
+        
         <motion.div 
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
-          variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          <FeatureCard 
-            icon={Cpu} color="#22c55e" 
-            title="Edge Processing" 
-            desc="Sức mạnh xử lý AI đặt ngay tại biên (QCS6490). Không phụ thuộc internet, độ trễ cực thấp, bảo mật dữ liệu tuyệt đối." 
+          <ChallengeCard 
+            icon={Users} color="#f59e0b"
+            title="Labor Dependency" 
+            desc="Rising labor costs and shortages of skilled workers make it difficult for facilities to maintain maximum capacity during harvest seasons."
           />
-          <FeatureCard 
-            icon={Wifi} color="#0ea5e9" 
-            title="WebSocket Stream" 
-            desc="Truyền tải luồng video và kết quả phân loại theo thời gian thực đến Dashboard mà không làm gián đoạn trải nghiệm." 
+          <ChallengeCard 
+            icon={Eye} color="#ef4444"
+            title="Subjectivity in Inspection" 
+            desc="Manual visual sorting is affected by fatigue, lighting conditions, and personal experience, leading to inconsistent output quality."
           />
-          <FeatureCard 
-            icon={BarChart3} color="#f59e0b" 
-            title="Actionable Analytics" 
-            desc="Biểu đồ trực quan, theo dõi Yield Rate và phát hiện xu hướng hỏng hóc để tối ưu hóa dây chuyền sản xuất." 
+          <ChallengeCard 
+            icon={Box} color="#84cc16"
+            title="Food Waste" 
+            desc="Failing to detect spoiled or moldy fruit can cause contamination of healthy products during storage and transit, resulting in significant losses."
           />
         </motion.div>
       </section>
 
-      {/* ── How it Works (Split New UI) ── */}
-      <section className="py-24 relative border-t border-outline-variant/30">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <motion.div 
-            initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
-            className="flex-1 w-full rounded-3xl overflow-hidden relative shadow-2xl"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-            <img src="/images/factory.png" alt="Factory Conveyor" className="w-full h-full object-cover aspect-square sm:aspect-video lg:aspect-square" />
-            <div className="absolute bottom-8 left-8 right-8 z-20">
-              <h3 className="text-white text-2xl font-black mb-2">Automated Conveyor Integration</h3>
-              <p className="text-white/80 text-sm">Cảm biến và camera đồng bộ hóa với băng chuyền để phân tích từng sản phẩm với tốc độ mili-giây.</p>
-            </div>
-          </motion.div>
+      {/* ── 3. Core Technology ── */}
+      <section className="py-20 relative">
+        <div className="absolute inset-0 bg-surface-container-low rounded-[3rem] -z-10" />
+        <div className="px-8 lg:px-16 py-16">
+          <SectionTitle 
+            icon={Microscope} 
+            title="Core Technology" 
+            sub="We bring data analytics out of the lab and directly into industrial production environments." 
+          />
 
-          <div className="flex-1 w-full">
+          <div className="flex flex-col lg:flex-row gap-12 items-center">
             <motion.div 
-              initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
-              variants={staggerContainer}
-              className="space-y-4"
+              initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+              className="flex-1 w-full space-y-8"
             >
-              <motion.div variants={fadeInUp} className="mb-10">
-                <h2 className="text-3xl lg:text-4xl font-black text-on-surface mb-4">Luồng Hoạt Động</h2>
-                <p className="text-on-surface-variant">Từ hình ảnh thô đến bảng báo cáo chi tiết chỉ trong nháy mắt.</p>
-              </motion.div>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-black text-on-surface flex items-center gap-3">
+                  <span className="flex w-3 h-3 rounded-full bg-primary" /> Edge Computing (QCS6490)
+                </h3>
+                <p className="text-on-surface-variant leading-relaxed">Instead of sending data to the cloud, the entire recognition process using Convolutional Neural Networks (CNNs) is executed directly on edge devices. This ensures millisecond latency and 100% offline capability.</p>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-2xl font-black text-on-surface flex items-center gap-3">
+                  <span className="flex w-3 h-3 rounded-full bg-blue-500" /> Computer Vision
+                </h3>
+                <p className="text-on-surface-variant leading-relaxed">"Seeing the invisible." Advanced image processing algorithms scan the entire fruit surface to detect ripeness, rot spots, and mold right on the moving conveyor belt.</p>
+              </div>
 
-              <div className="relative">
-                {/* Connecting Line */}
-                <div className="absolute top-6 bottom-16 left-6 w-0.5 bg-surface-container-high" />
+              <div className="flex flex-wrap gap-3 pt-4">
+                <TechPill icon={Cpu} label="Qualcomm Edge" />
+                <TechPill icon={Camera} label="Optical Scanning" />
+                <TechPill icon={Wifi} label="IoT Dashboard" />
+              </div>
+            </motion.div>
 
-                <StepItem num="1" title="Thu Thập Hình Ảnh" desc="Camera độ phân giải cao ghi lại hình ảnh sản phẩm liên tục trên băng chuyền." />
-                <StepItem num="2" title="Phân Tích Bằng AI" desc="Thuật toán Deep Learning tại Edge phân tích bề mặt, màu sắc, xác định độ chín và phát hiện nấm mốc." />
-                <StepItem num="3" title="Truyền Tải Real-time" desc="Dữ liệu và Frame hình được gửi ngay lập tức lên Backend thông qua giao thức Socket.io." />
-                <StepItem num="4" title="Dashboard & Quyết Định" desc="Web UI hiển thị kết quả, người quản lý dễ dàng theo dõi, trích xuất báo cáo hoặc hiệu chỉnh lại nhãn nếu cần." />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+              className="flex-1 w-full max-w-md relative"
+            >
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-surface-container-low/50">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent mix-blend-overlay" />
+                <img src="/images/factory.png" alt="Factory Integration" className="w-full h-auto object-cover aspect-square" />
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ── Old AboutUI Sections Integrated Below ── */}
-      <div className="max-w-4xl mx-auto space-y-10 mt-20 pt-10 border-t border-outline-variant/30">
+      {/* ── 4. Value Proposition ── */}
+      <section className="py-20 relative">
+        <SectionTitle 
+          icon={Award} 
+          title="Value Proposition" 
+          sub="Measuring success with real-world industrial metrics." 
+        />
         
-        {/* Architecture */}
-        <FadeUp delay={0}>
-          <div className="glass-card rounded-2xl p-7 relative z-10">
-            <SectionTitle icon={Layers} title="Kiến trúc hệ thống" sub="Luồng dữ liệu từ Camera → AI → Web" />
-            <div className="flex flex-wrap items-start justify-center gap-2 sm:gap-0">
-              <ArchNode icon={Camera}  label="Camera"    sub="USB / Laptop"     color="#6366f1" delay={0.1} />
-              <Arrow />
-              <ArchNode icon={Cpu}     label="Edge AI"   sub="QCS6490 / Laptop" color="#22c55e" delay={0.15} />
-              <Arrow />
-              <ArchNode icon={Server}  label="Backend"   sub="Node.js + SQLite" color="#f59e0b" delay={0.2} />
-              <Arrow />
-              <ArchNode icon={Monitor} label="Web App"   sub="React + Vite"     color="#0ea5e9" delay={0.25} />
-            </div>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant">
-                <p className="font-black text-on-surface mb-1">① Camera → Firmware</p>
-                <p className="text-on-surface-variant">OpenCV đọc frame từ camera, lật mirror, resize và encode JPEG.</p>
-              </div>
-              <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant">
-                <p className="font-black text-on-surface mb-1">② Firmware → Backend</p>
-                <p className="text-on-surface-variant">Stream frame qua WebSocket. Kết quả AI gửi qua REST API POST.</p>
-              </div>
-              <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant">
-                <p className="font-black text-on-surface mb-1">③ Backend → Web UI</p>
-                <p className="text-on-surface-variant">Backend relay frame xuống browser qua Socket.io. Stats trả về qua REST API.</p>
-              </div>
-            </div>
-          </div>
-        </FadeUp>
-
-        {/* AI Labels */}
-        <FadeUp delay={0.1}>
-          <div className="glass-card rounded-2xl p-7 relative z-10">
-            <SectionTitle icon={Zap} title="Nhãn AI & Ngưỡng tin cậy" sub="Mô hình phân loại 4 lớp với bộ lọc confidence" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <LabelItem color="#22c55e" label="Ripe — Chín đúng độ" desc="Quả đạt tiêu chuẩn xuất xưởng. Màu vàng đều, không đốm." />
-                <LabelItem color="#eab308" label="Unripe — Còn xanh" desc="Quả chưa chín. Có thể để thêm 2-3 ngày trước khi đóng gói." />
-                <LabelItem color="#f97316" label="Overripe — Chín rục" desc="Quả quá chín. Cần tách riêng để chế biến hoặc loại bỏ." />
-                <LabelItem color="#ef4444" label="Rotten — Hỏng/Thối" desc="Quả bị hỏng. Phải loại ra ngay, không để lây sang quả khác." />
-                <LabelItem color="#9ca3af" label="Unknown — Không xác định" desc="Độ tin cậy AI < 70%. Cần kiểm tra thủ công." />
-              </div>
-              <div className="space-y-4">
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl p-4">
-                  <div className="flex items-start gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs font-black text-amber-800 dark:text-amber-300">Confidence Threshold: 70%</p>
-                  </div>
-                  <p className="text-xs text-amber-700 dark:text-amber-400">Nếu dự đoán cao nhất &lt; 70%, hệ thống gán nhãn <strong>Unknown</strong>.</p>
-                </div>
-                <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant">
-                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Yield Rate là gì?</p>
-                  <p className="text-xs text-on-surface-variant"><strong className="text-on-surface">Yield Rate</strong> = (Ripe + Unripe) / Tổng × 100%</p>
-                </div>
-                <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant">
-                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Rejected là gì?</p>
-                  <p className="text-xs text-on-surface-variant"><strong className="text-on-surface">Rejected</strong> = Overripe + Rotten</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </FadeUp>
-
-        {/* Tech Stack */}
-        <FadeUp delay={0.2}>
-          <div className="glass-card rounded-2xl p-7 relative z-10">
-            <SectionTitle icon={Code2} title="Công nghệ sử dụng" sub="Stack đầy đủ từ firmware đến frontend" />
-            <div className="space-y-5">
-              <div>
-                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Frontend</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <TechChip name="React 19" role="UI Framework" icon={Globe} color="#0ea5e9" />
-                  <TechChip name="Tailwind v4" role="CSS Utility" icon={Layers} color="#06b6d4" />
-                  <TechChip name="Framer Motion" role="Animation" icon={Zap} color="#8b5cf6" />
-                  <TechChip name="Recharts" role="Data Visualization" icon={BarChart3} color="#22c55e" />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <FadeUp delay={0.1}>
+            <div className="glass-card p-8 rounded-3xl border border-outline-variant flex items-start gap-5">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                <Target className="w-6 h-6 text-green-500" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Backend</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <TechChip name="Node.js" role="Runtime" icon={Server} color="#84cc16" />
-                  <TechChip name="Socket.io" role="WebSocket" icon={Wifi} color="#f59e0b" />
-                  <TechChip name="SQLite" role="Database" icon={Database} color="#64748b" />
-                  <TechChip name="Express.js" role="HTTP Server" icon={Globe} color="#6366f1" />
-                </div>
+                <h4 className="text-xl font-black text-on-surface mb-2">Accuracy &gt; 95%</h4>
+                <p className="text-sm text-on-surface-variant">Eliminates human error entirely. Ensures consistent output quality and protects brand reputation.</p>
+              </div>
+            </div>
+          </FadeUp>
+          <FadeUp delay={0.2}>
+            <div className="glass-card p-8 rounded-3xl border border-outline-variant flex items-start gap-5">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Activity className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Edge AI</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <TechChip name="Python 3.x" role="Runtime" icon={Code2} color="#3b82f6" />
-                  <TechChip name="OpenCV" role="Vision" icon={Camera} color="#ef4444" />
-                  <TechChip name="Custom Vision" role="Model" icon={Cpu} color="#0284c7" />
-                  <TechChip name="Socket.io-client" role="Client" icon={Wifi} color="#f59e0b" />
-                </div>
+                <h4 className="text-xl font-black text-on-surface mb-2">Superior Throughput</h4>
+                <p className="text-sm text-on-surface-variant">Capable of continuous 24/7 sorting without performance degradation, maximizing Yield Rate.</p>
               </div>
             </div>
-          </div>
-        </FadeUp>
-
-        {/* How to run */}
-        <FadeUp delay={0.25}>
-          <div className="glass-card rounded-2xl p-7 relative z-10">
-            <SectionTitle icon={Info} title="Hướng dẫn chạy (Development)" sub="Thứ tự khởi động các service" />
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { step: '01', label: 'Backend Server', cmds: ['cd web-app/', 'npm run dev'], color: '#22c55e' },
-                { step: '02', label: 'AI Mock (Test)', cmds: ['cd firmware/', 'python mock_ai.py'], color: '#f59e0b' },
-                { step: '03', label: 'Camera Firmware', cmds: ['cd firmware/', 'python realtime.py --laptop'], color: '#6366f1' },
-              ].map((s) => (
-                <div key={s.step} className="bg-surface-container-low rounded-xl p-5 border border-outline-variant">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-lg" style={{ backgroundColor: s.color + '20', color: s.color }}>STEP {s.step}</span>
-                    <p className="text-sm font-black text-on-surface">{s.label}</p>
-                  </div>
-                  <div className="bg-black/80 rounded-lg p-3 mb-3 font-mono">
-                    {s.cmds.map((cmd, i) => (
-                      <p key={i} className="text-[11px] text-green-400 leading-relaxed">
-                        <span className="text-green-600 select-none">$ </span>{cmd}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          </FadeUp>
+          <FadeUp delay={0.3}>
+            <div className="glass-card p-8 rounded-3xl border border-outline-variant flex items-start gap-5">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-on-surface mb-2">Clear Data Traceability</h4>
+                <p className="text-sm text-on-surface-variant">All results are stored and visualized on the Dashboard, supporting timely business decisions.</p>
+              </div>
             </div>
-          </div>
-        </FadeUp>
-      </div>
-
-      {/* ── CTA ── */}
-      <motion.section 
-        initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
-        className="py-16 mt-16 relative overflow-hidden rounded-[2.5rem] bg-gradient-primary text-center px-6"
-      >
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-          <h2 className="text-3xl lg:text-5xl font-black text-white leading-tight">Sẵn sàng trải nghiệm <br />AgriVision Edge?</h2>
-          <p className="text-primary-50 text-lg">Hệ thống đã được thiết lập sẵn. Bấm để truy cập ngay vào không gian giám sát thời gian thực.</p>
-          <button 
-            onClick={() => setView('dashboard')}
-            className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-white text-primary text-base font-black uppercase tracking-wider hover:scale-105 hover:shadow-2xl transition-all duration-300"
-          >
-            Vào Trang Dashboard <ArrowRight className="w-5 h-5" />
-          </button>
+          </FadeUp>
+          <FadeUp delay={0.4}>
+            <div className="glass-card p-8 rounded-3xl border border-outline-variant flex items-start gap-5">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-purple-500" />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-on-surface mb-2">Cost Optimization</h4>
+                <p className="text-sm text-on-surface-variant">Minimizes QC personnel costs and prevents economic losses from contamination spread in storage.</p>
+              </div>
+            </div>
+          </FadeUp>
         </div>
-      </motion.section>
+      </section>
+
+      {/* ── 5. Project Team ── */}
+      <section className="py-20 relative border-t border-outline-variant/30">
+        <SectionTitle 
+          icon={Users} 
+          title="Development Team" 
+          sub="The people behind the research and development of this POC." 
+        />
+        
+        <motion.div 
+          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          <TeamMember name="Nguyễn Ngọc Hồng Ánh" role="Researcher & Developer" />
+          <TeamMember name="Nguyễn Thiện Hưng" role="Researcher & Developer" />
+          <TeamMember name="Phan Ngọc Ngân" role="Researcher & Developer" />
+          <TeamMember name="Võ Thị Kim Thoa" role="Researcher & Developer" />
+        </motion.div>
+      </section>
+
+
 
     </div>
   );
